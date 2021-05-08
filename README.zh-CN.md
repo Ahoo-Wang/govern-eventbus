@@ -109,14 +109,14 @@ values ('subscribe_leader', 0, 0, 0, '', 0);
 ### Gradle
 
 ```kotlin
-    val eventbusVersion = "0.9.1";
-implementation("me.ahoo.eventbus:eventbus-spring-boot-starter:${eventbusVersion}")
-implementation("me.ahoo.eventbus:eventbus-spring-boot-autoconfigure:${eventbusVersion}") {
-    capabilities {
-        requireCapability("me.ahoo.eventbus:rabbit-bus-support")
-        //requireCapability("me.ahoo.eventbus:kafka-bus-support")
+    val eventbusVersion = "0.9.2";
+    implementation("me.ahoo.eventbus:eventbus-spring-boot-starter:${eventbusVersion}")
+    implementation("me.ahoo.eventbus:eventbus-spring-boot-autoconfigure:${eventbusVersion}") {
+        capabilities {
+            requireCapability("me.ahoo.eventbus:rabbit-bus-support")
+            //requireCapability("me.ahoo.eventbus:kafka-bus-support")
+        }
     }
-}
 ```
 
 ### Maven
@@ -131,7 +131,7 @@ implementation("me.ahoo.eventbus:eventbus-spring-boot-autoconfigure:${eventbusVe
     <modelVersion>4.0.0</modelVersion>
     <artifactId>demo</artifactId>
     <properties>
-        <eventbus.version>0.9.1</eventbus.version>
+        <eventbus.version>0.9.2</eventbus.version>
     </properties>
 
     <dependencies>

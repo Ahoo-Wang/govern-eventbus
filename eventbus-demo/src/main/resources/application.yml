@@ -1,0 +1,58 @@
+logging:
+  level:
+    me.ahoo.eventbus: debug
+    org:
+      springframework:
+        jdbc: debug
+spring:
+  application:
+    name: eventbus-demo
+  datasource:
+    url: jdbc:mysql://localhost:3306/eventbus_db?serverTimezone=GMT%2B8&characterEncoding=utf-8
+    username: root
+    password: root
+  rabbitmq:
+    host: localhost
+    username: eventbus
+    password: eventbus
+#  kafka:
+#    bootstrap-servers: localhost:9092
+#    properties:
+#      security.protocol: SASL_PLAINTEXT
+#      sasl.mechanism: SCRAM-SHA-256
+#      sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required username="admin" password="admin";
+#    listener:
+#      missing-topics-fatal: false
+#  cloud:
+#    zookeeper:
+#      connect-string: localhost:2181
+
+govern:
+  eventbus:
+    rabbit:
+      exchange: eventbus
+    compensate:
+      db:
+        publish:
+          schedule:
+            initial-delay: 30
+            period: 10
+        subscribe:
+          schedule:
+            initial-delay: 30
+            period: 10
+        enabled: true
+    #      zookeeper:
+    #        enabled: false
+    #        publish:
+    #          leader-prefix: /eventbus/${spring.application.name}
+    #          schedule:
+    #            initial-delay: 30
+    #            period: 10
+    #        subscribe:
+    #          leader-prefix: /eventbus/${spring.application.name}
+    #          schedule:
+    #            initial-delay: 30
+    #            period: 10
+    subscriber:
+      prefix: ${spring.application.name}.

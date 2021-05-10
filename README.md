@@ -112,6 +112,8 @@ values ('subscribe_leader', 0, 0, 0, '', 0);
 
 ### Gradle
 
+> Kotlin DSL
+
 ```kotlin
     val eventbusVersion = "0.9.2";
     implementation("me.ahoo.eventbus:eventbus-spring-boot-starter:${eventbusVersion}")

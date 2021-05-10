@@ -1,6 +1,6 @@
 # Govern EventBus
 
-*Govern EventBus* 是一个历经四年生产环境验证的*事件驱动架构*框架， 通过事件总线机制来治理微服务间的远程过程调用。
+*Govern EventBus* 是一个历经四年生产环境验证的 *事件驱动架构* 框架， 通过事件总线机制来治理微服务间的远程过程调用。
 使用本地事务来支持微服务内强一致性，事件总线来实现微服务间的最终一致性，另外还提供了事件发布/订阅失败的自动补偿机制。
 
 ## 执行流
@@ -107,6 +107,8 @@ values ('subscribe_leader', 0, 0, 0, '', 0);
 ```
 
 ### Gradle
+
+> Kotlin DSL
 
 ```kotlin
     val eventbusVersion = "0.9.2";

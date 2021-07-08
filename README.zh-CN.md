@@ -111,7 +111,7 @@ values ('subscribe_leader', 0, 0, 0, '', 0);
 > Kotlin DSL
 
 ```kotlin
-    val eventbusVersion = "0.9.2";
+    val eventbusVersion = "0.9.3";
     implementation("me.ahoo.eventbus:eventbus-spring-boot-starter:${eventbusVersion}")
     implementation("me.ahoo.eventbus:eventbus-spring-boot-autoconfigure:${eventbusVersion}") {
         capabilities {
@@ -133,7 +133,7 @@ values ('subscribe_leader', 0, 0, 0, '', 0);
     <modelVersion>4.0.0</modelVersion>
     <artifactId>demo</artifactId>
     <properties>
-        <eventbus.version>0.9.2</eventbus.version>
+        <eventbus.version>0.9.3</eventbus.version>
     </properties>
 
     <dependencies>

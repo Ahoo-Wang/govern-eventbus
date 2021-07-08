@@ -1,3 +1,16 @@
+/*
+ * Copyright [2021-2021] [ahoo wang <ahoowang@qq.com> (https://github.com/Ahoo-Wang)].
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package me.ahoo.eventbus.spring.boot.autoconfigure;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -8,11 +21,6 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import lombok.var;
-import me.ahoo.eventbus.core.serialize.Deserializer;
-import me.ahoo.eventbus.core.serialize.Serializer;
-import me.ahoo.eventbus.core.serialize.json.JsonDeserializer;
-import me.ahoo.eventbus.core.serialize.json.JsonSerializer;
-import me.ahoo.eventbus.spring.annotation.EnableEventBus;
 import me.ahoo.eventbus.core.consistency.ConsistencyPublisher;
 import me.ahoo.eventbus.core.consistency.ConsistencySubscriberFactory;
 import me.ahoo.eventbus.core.consistency.impl.ConsistencyPublisherImpl;
@@ -24,11 +32,16 @@ import me.ahoo.eventbus.core.publisher.impl.SimpleEventDescriptorParser;
 import me.ahoo.eventbus.core.publisher.impl.SimpleEventNameGenerator;
 import me.ahoo.eventbus.core.repository.PublishEventRepository;
 import me.ahoo.eventbus.core.repository.SubscribeEventRepository;
+import me.ahoo.eventbus.core.serialize.Deserializer;
+import me.ahoo.eventbus.core.serialize.Serializer;
+import me.ahoo.eventbus.core.serialize.json.JsonDeserializer;
+import me.ahoo.eventbus.core.serialize.json.JsonSerializer;
 import me.ahoo.eventbus.core.subscriber.SubscriberNameGenerator;
 import me.ahoo.eventbus.core.subscriber.SubscriberScanner;
 import me.ahoo.eventbus.core.subscriber.impl.SimpleSubscriberNameGenerator;
 import me.ahoo.eventbus.jdbc.JdbcPublishEventRepository;
 import me.ahoo.eventbus.jdbc.JdbcSubscribeEventRepository;
+import me.ahoo.eventbus.spring.annotation.EnableEventBus;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;

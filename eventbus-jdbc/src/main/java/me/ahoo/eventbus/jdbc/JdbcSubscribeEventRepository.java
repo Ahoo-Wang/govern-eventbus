@@ -250,6 +250,20 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
     }
 
     /**
+     * 申请续约
+     *
+     * @param termLength
+     * @param transitionLength
+     * @param leaderId
+     * @param lastVersion
+     * @return
+     */
+    @Override
+    public boolean renewLeadership(long termLength, long transitionLength, String leaderId, int lastVersion) {
+        return JdbcPublishEventRepository.renewLeadership(this.jdbcTemplate, CompensateLeader.SUBSCRIBE_LEADER, termLength, transitionLength, leaderId, lastVersion);
+    }
+
+    /**
      * Release the leadership
      *
      * @param leaderId

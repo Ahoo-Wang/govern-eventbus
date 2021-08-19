@@ -39,8 +39,9 @@ public class CompensateLeader implements Version {
      */
     private long termEnd;
     /**
-     * 缓冲期/过渡期
-     * 用于缓冲领导者任务执行时间
+     * 缓冲期/过渡期（绝对时间）
+     * 1. 为了使领导权稳定，当前领导者可以在过渡期内优先续期
+     * 2. 用于缓冲领导者任务执行时间
      * {@link java.util.concurrent.TimeUnit#SECONDS}
      */
     private long transitionPeriod;
@@ -65,7 +66,7 @@ public class CompensateLeader implements Version {
      * @return
      */
     public boolean hasLeader() {
-        return transitionPeriod > currentTs;
+        return transitionPeriod >= currentTs;
     }
 
     /**
@@ -84,12 +85,21 @@ public class CompensateLeader implements Version {
      * @return
      */
     public boolean isInOffice() {
-        return this.termEnd > currentTs;
+        return this.termEnd >= currentTs;
     }
 
-    public boolean isInOfficeOf(String leaderId) {
+    /**
+     * 判断是否在过渡期内
+     *
+     * @return
+     */
+    public boolean isInTransition() {
+        return this.transitionPeriod >= currentTs;
+    }
+
+    public boolean isInTransitionOf(String leaderId) {
         return isLeader(leaderId)
-                && isInOffice();
+                && isInTransition();
     }
 
     public String getName() {

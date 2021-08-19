@@ -39,6 +39,16 @@ public interface LeaderRepository {
     boolean fightLeadership(long termLength, long transitionLength, String leaderId, int lastVersion);
 
     /**
+     * 申请续约
+     * @param termLength
+     * @param transitionLength
+     * @param leaderId
+     * @param lastVersion
+     * @return
+     */
+    boolean renewLeadership(long termLength, long transitionLength, String leaderId, int lastVersion);
+
+    /**
      * Release the leadership
      *
      * @param leaderId

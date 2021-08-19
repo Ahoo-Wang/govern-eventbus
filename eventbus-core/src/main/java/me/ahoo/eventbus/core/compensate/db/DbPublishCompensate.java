@@ -54,7 +54,7 @@ public class DbPublishCompensate extends AbstractPublishCompensate {
     }
 
     private void doWork() {
-        if (!CompensateLeaderService.fightLeadership(publishEventRepository, leaderId, publishConfig.getLeader())) {
+        if (!CompensateLeaderService.fightLeadership(publishEventRepository, leaderId, publishConfig.getLeader()).isSucceeded()) {
             return;
         }
         this.schedule();

@@ -14,6 +14,7 @@
 dependencies {
     implementation(project(":eventbus-core"))
     implementation("org.springframework:spring-jdbc")
+    testImplementation("mysql:mysql-connector-java")
 }
 
 description = "eventbus-jdbc"

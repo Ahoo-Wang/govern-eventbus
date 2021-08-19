@@ -56,7 +56,7 @@ public class DbSubscribeCompensate extends AbstractSubscribeCompensate {
     }
 
     private void doWork() {
-        if (!CompensateLeaderService.fightLeadership(subscribeEventRepository, leaderId, subscribeConfig.getLeader())) {
+        if (!CompensateLeaderService.fightLeadership(subscribeEventRepository, leaderId, subscribeConfig.getLeader()).isSucceeded()) {
             return;
         }
         schedule();

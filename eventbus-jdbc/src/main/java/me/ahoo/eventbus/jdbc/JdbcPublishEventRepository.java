@@ -223,6 +223,20 @@ public class JdbcPublishEventRepository implements PublishEventRepository {
     }
 
     /**
+     * 申请续约
+     *
+     * @param termLength
+     * @param transitionLength
+     * @param leaderId
+     * @param lastVersion
+     * @return
+     */
+    @Override
+    public boolean renewLeadership(long termLength, long transitionLength, String leaderId, int lastVersion) {
+        return renewLeadership(this.jdbcTemplate, CompensateLeader.PUBLISH_LEADER, termLength, transitionLength, leaderId, lastVersion);
+    }
+
+    /**
      * Release the leadership
      *
      * @param leaderId
@@ -242,12 +256,29 @@ public class JdbcPublishEventRepository implements PublishEventRepository {
             "where name =:name and version = :last_version;";
 
     public static boolean fightLeadership(NamedParameterJdbcTemplate jdbcTemplate, String leaderName, long termLength, long transitionLength, String leaderId, int lastVersion) {
+        MapSqlParameterSource sqlParams = getLeadershipParams(leaderName, termLength, transitionLength, leaderId, lastVersion);
+        return jdbcTemplate.update(SQL_FIGHT_LEADERSHIP, sqlParams) > 0;
+    }
+
+    private static MapSqlParameterSource getLeadershipParams(String leaderName, long termLength, long transitionLength, String leaderId, int lastVersion) {
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("name", leaderName);
         sqlParams.addValue("term_length", termLength);
         sqlParams.addValue("transition_length", transitionLength);
         sqlParams.addValue("leader_id", leaderId);
         sqlParams.addValue("last_version", lastVersion);
-        return jdbcTemplate.update(SQL_FIGHT_LEADERSHIP, sqlParams) > 0;
+        return sqlParams;
+    }
+
+    private static final String SQL_RENEW_LEADERSHIP = "update compensate_leader set " +
+            "term_start=unix_timestamp()," +
+            "term_end=(unix_timestamp()+:term_length)," +
+            "transition_period=(unix_timestamp()+:term_length+:transition_length)," +
+            "version=version + 1 " +
+            "where name =:name and leader_id=:leader_id and version = :last_version;";
+
+    public static boolean renewLeadership(NamedParameterJdbcTemplate jdbcTemplate, String leaderName, long termLength, long transitionLength, String leaderId, int lastVersion) {
+        MapSqlParameterSource sqlParams = getLeadershipParams(leaderName, termLength, transitionLength, leaderId, lastVersion);
+        return jdbcTemplate.update(SQL_RENEW_LEADERSHIP, sqlParams) > 0;
     }
 
     private static final String SQL_RELEASE_LEADERSHIP = "update compensate_leader set " +

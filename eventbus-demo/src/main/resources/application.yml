@@ -3,7 +3,7 @@ logging:
     me.ahoo.eventbus: debug
     org:
       springframework:
-        jdbc: debug
+        jdbc: info
 spring:
   application:
     name: eventbus-demo

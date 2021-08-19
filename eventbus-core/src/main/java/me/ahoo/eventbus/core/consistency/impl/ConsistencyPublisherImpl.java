@@ -35,9 +35,9 @@ import java.util.function.Supplier;
  */
 @Slf4j
 public class ConsistencyPublisherImpl implements ConsistencyPublisher, AutoCloseable {
-    private final int EXECUTOR_CORE_POOL_SIZE = 1;
-    private final int EXECUTOR_MAX_POOL_SIZE = Runtime.getRuntime().availableProcessors();
-    private final int EXECUTOR_BLOCKING_QUEUE_SIZE = 10000;
+    private static final int EXECUTOR_CORE_POOL_SIZE = 1;
+    private static final int EXECUTOR_MAX_POOL_SIZE = Runtime.getRuntime().availableProcessors();
+    private static final int EXECUTOR_BLOCKING_QUEUE_SIZE = 10000;
     private final Publisher publisher;
     private final EventDescriptorParser eventDescriptorParser;
     private final PublishEventRepository publishEventRepository;
@@ -126,7 +126,6 @@ public class ConsistencyPublisherImpl implements ConsistencyPublisher, AutoClose
             if (log.isDebugEnabled()) {
                 log.debug("doPublish - event to bus succeeded! taken:[{}].", taken);
             }
-
         } catch (Throwable throwable) {
             var taken = stopwatch.elapsed(TimeUnit.MILLISECONDS);
             var busError = String.format("doPublish - event to bus error -> id:[%d] error,taken:[%d]!", publishIdentity.getId(), taken);

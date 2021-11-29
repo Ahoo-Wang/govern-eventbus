@@ -222,7 +222,7 @@ public class OrderCreatedEvent {
     public String toString() {
         return "OrderCreatedEvent{" +
                 "orderId=" + orderId +
-                '}';
+                "}";
     }
 }
 ```

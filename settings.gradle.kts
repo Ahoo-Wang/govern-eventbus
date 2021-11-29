@@ -14,7 +14,6 @@
 rootProject.name = "govern-eventbus"
 include(":eventbus-rabbit")
 include(":eventbus-spring-boot-starter")
-include(":eventbus-zookeeper")
 include(":eventbus-spring-context")
 include(":eventbus-kafka")
 include(":eventbus-demo")

@@ -15,16 +15,18 @@ package me.ahoo.eventbus.core.consistency.impl;
 
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
-import lombok.var;
 import me.ahoo.eventbus.core.consistency.ConsistencyPublisher;
 import me.ahoo.eventbus.core.consistency.ConsistencySubscriber;
+import me.ahoo.eventbus.core.publisher.EventDescriptor;
 import me.ahoo.eventbus.core.publisher.EventDescriptorParser;
 import me.ahoo.eventbus.core.publisher.PublishEvent;
 import me.ahoo.eventbus.core.repository.PublishEventRepository;
 import me.ahoo.eventbus.core.repository.PublishIdentity;
 import me.ahoo.eventbus.core.repository.SubscribeEventRepository;
+import me.ahoo.eventbus.core.repository.SubscribeIdentity;
 import me.ahoo.eventbus.core.subscriber.Subscriber;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 
 import java.lang.reflect.Method;
 import java.util.Objects;
@@ -37,24 +39,23 @@ import java.util.concurrent.TimeUnit;
 public class ConsistencySubscriberImpl implements ConsistencySubscriber {
 
     private final Subscriber targetSubscriber;
-    private final EventDescriptorParser eventDescriptorParser;
     private final ConsistencyPublisher consistencyPublisher;
     private final PublishEventRepository publishEventRepository;
     private final SubscribeEventRepository subscribeEventRepository;
     private final PlatformTransactionManager transactionManager;
+    private final EventDescriptorParser eventDescriptorParser;
 
     public ConsistencySubscriberImpl(Subscriber targetSubscriber,
-                                     EventDescriptorParser eventDescriptorParser,
                                      ConsistencyPublisher consistencyPublisher,
                                      PublishEventRepository publishEventRepository,
                                      SubscribeEventRepository subscribeEventRepository,
-                                     PlatformTransactionManager transactionManager) {
+                                     PlatformTransactionManager transactionManager, EventDescriptorParser eventDescriptorParser) {
         this.targetSubscriber = targetSubscriber;
-        this.eventDescriptorParser = eventDescriptorParser;
         this.consistencyPublisher = consistencyPublisher;
         this.publishEventRepository = publishEventRepository;
         this.subscribeEventRepository = subscribeEventRepository;
         this.transactionManager = transactionManager;
+        this.eventDescriptorParser = eventDescriptorParser;
     }
 
     @Override
@@ -72,50 +73,50 @@ public class ConsistencySubscriberImpl implements ConsistencySubscriber {
      */
     @Override
     public Object invoke(PublishEvent subscribePublishEvent) {
-
-        var stopwatch = Stopwatch.createStarted();
-        var subscribeIdentity = subscribeEventRepository.initialize(targetSubscriber, subscribePublishEvent);
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        SubscribeIdentity subscribeIdentity = subscribeEventRepository.initialize(targetSubscriber, subscribePublishEvent);
 
         PublishIdentity publishIdentity = null;
         Object publishEventData = null;
 
-        var transactionStatus = transactionManager.getTransaction(null);
+        TransactionStatus transactionStatus = transactionManager.getTransaction(null);
         try {
             /**
              *  mark first!
              */
             subscribeEventRepository.markSucceeded(subscribeIdentity);
-            var returnVal = targetSubscriber.invoke(subscribePublishEvent);
-            if (targetSubscriber.isPublish() && Objects.nonNull(returnVal)) {
-                var eventDescriptor = eventDescriptorParser.parse(returnVal);
+            Object returnVal = targetSubscriber.invoke(subscribePublishEvent);
+            if (targetSubscriber.rePublish() && Objects.nonNull(returnVal)) {
+                EventDescriptor eventDescriptor = eventDescriptorParser.get(returnVal);
                 publishEventData = eventDescriptor.getEventData(returnVal);
                 if (Objects.nonNull(publishEventData)) {
-                    publishIdentity = publishEventRepository.initialize(eventDescriptor.getEventName(), publishEventData);
+                    long eventDataId = eventDescriptor.getEventDataId(publishEventData);
+                    publishIdentity = publishEventRepository.initialize(eventDescriptor.getEventName(), eventDataId, publishEventData);
                 }
             }
+            transactionManager.commit(transactionStatus);
         } catch (Throwable throwable) {
             transactionManager.rollback(transactionStatus);
             try {
                 subscribeEventRepository.markFailed(subscribeIdentity, throwable);
             } catch (Throwable subscribeFailedThrowable) {
-                var taken = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-                var markFailedError = String.format("invoke - mark subscribe event status to failed error. -> id:[%d] error,taken:[%d]ms!"
-                        , subscribeIdentity.getId()
-                        , taken);
-                log.error(markFailedError, subscribeFailedThrowable);
+                if (log.isErrorEnabled()) {
+                    String markFailedError = String.format("invoke - mark subscribe event status to failed error. -> id:[%d] error,taken:[%d]ms!"
+                            , subscribeIdentity.getId()
+                            , stopwatch.elapsed(TimeUnit.MILLISECONDS));
+                    log.error(markFailedError, subscribeFailedThrowable);
+                }
             }
-            var taken = stopwatch.elapsed(TimeUnit.MILLISECONDS);
             if (log.isInfoEnabled()) {
-                log.info("invoke - Subscribe failed! -> id:[{}],taken:[{}]", subscribeIdentity.getId(), taken);
+                log.info("invoke - Subscribe failed! -> id:[{}],taken:[{}]", subscribeIdentity.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
             }
             throw throwable;
         }
-        transactionManager.commit(transactionStatus);
-        var taken = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+
         if (log.isDebugEnabled()) {
-            log.debug("invoke - Subscribe succeeded! -> id:[{}],taken:[{}]", subscribeIdentity.getId(), taken);
+            log.debug("invoke - Subscribe succeeded! -> id:[{}],taken:[{}]", subscribeIdentity.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
-        if (!targetSubscriber.isPublish()) {
+        if (!targetSubscriber.rePublish()) {
             return publishEventData;
         }
         if (Objects.isNull(publishIdentity)) {
@@ -150,7 +151,7 @@ public class ConsistencySubscriberImpl implements ConsistencySubscriber {
     }
 
     @Override
-    public boolean isPublish() {
-        return targetSubscriber.isPublish();
+    public boolean rePublish() {
+        return targetSubscriber.rePublish();
     }
 }

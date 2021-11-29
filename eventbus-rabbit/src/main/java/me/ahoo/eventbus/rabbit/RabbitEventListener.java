@@ -15,7 +15,6 @@ package me.ahoo.eventbus.rabbit;
 
 import com.google.common.base.Charsets;
 import lombok.extern.slf4j.Slf4j;
-import lombok.var;
 import me.ahoo.eventbus.core.publisher.PublishEvent;
 import me.ahoo.eventbus.core.subscriber.Subscriber;
 import org.springframework.amqp.core.Message;
@@ -43,8 +42,10 @@ public class RabbitEventListener implements MessageListener {
             }
             this.subscriber.invoke(publishEvent);
         } catch (Throwable throwable) {
-            var payloadStr = new String(message.getBody(), Charsets.UTF_8);
-            log.error(String.format("onMessage - received event ERROR -> routeKey:[%s] , payload: %n  %s", subscriber.getSubscribeEventName(), payloadStr), throwable);
+            String payloadStr = new String(message.getBody(), Charsets.UTF_8);
+            if (log.isErrorEnabled()) {
+                log.error(String.format("onMessage - received event ERROR -> routeKey:[%s] , payload: %n  %s", subscriber.getSubscribeEventName(), payloadStr), throwable);
+            }
         }
     }
 }

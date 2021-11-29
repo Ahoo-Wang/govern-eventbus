@@ -18,6 +18,7 @@ import me.ahoo.eventbus.core.repository.entity.SubscribeEventCompensateEntity;
 import me.ahoo.eventbus.core.repository.entity.SubscribeEventEntity;
 import me.ahoo.eventbus.core.subscriber.Subscriber;
 
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -25,7 +26,7 @@ import java.util.List;
  *
  * @author ahoo wang
  */
-public interface SubscribeEventRepository extends EventRepository, LeaderRepository {
+public interface SubscribeEventRepository extends EventRepository {
 
     /**
      * *  getSubscribeEventBy event_id and event_name and subscribe_name
@@ -65,7 +66,7 @@ public interface SubscribeEventRepository extends EventRepository, LeaderReposit
      * @param maxVersion
      * @return failed event
      */
-    List<SubscribeEventEntity> queryFailed(int limit, long before, int maxVersion);
+    List<SubscribeEventEntity> queryFailed(int limit, Duration before, int maxVersion);
 
     int compensate(SubscribeEventCompensateEntity subscribeEventCompensationEntity);
 

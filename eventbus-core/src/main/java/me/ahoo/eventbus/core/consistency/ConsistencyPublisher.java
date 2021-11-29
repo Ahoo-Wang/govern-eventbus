@@ -40,7 +40,7 @@ public interface ConsistencyPublisher {
      *
      * @param publishIdentity  publish event id
      * @param publishEventData publish event data
-     * @return
+     * @return the Future of publish
      */
     Future<?> publish(PublishIdentity publishIdentity, Object publishEventData);
 }

@@ -31,7 +31,8 @@ ext {
     set("jmhVersion", "1.29")
     set("guavaVersion", "30.0-jre")
     set("springfoxVersion", "3.0.0")
-    set("cosIdVersion", "1.3.3")
+    set("cosIdVersion", "1.3.18")
+    set("simbaVersion", "0.2.2")
     set("libraryProjects", libraryProjects)
 }
 

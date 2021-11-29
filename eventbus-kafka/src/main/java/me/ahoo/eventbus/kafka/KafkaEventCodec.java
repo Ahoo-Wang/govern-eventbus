@@ -13,7 +13,7 @@
 
 package me.ahoo.eventbus.kafka;
 
-import lombok.var;
+import com.google.common.primitives.Longs;
 import me.ahoo.eventbus.core.codec.EventCodec;
 import me.ahoo.eventbus.core.compensate.CompensatePublishEvent;
 import me.ahoo.eventbus.core.publisher.PublishEvent;
@@ -21,13 +21,19 @@ import me.ahoo.eventbus.core.serialize.Deserializer;
 import me.ahoo.eventbus.core.serialize.Serializer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeaders;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * @author ahoo wang
  * create time 2020/5/14 21:44
  */
 public class KafkaEventCodec implements EventCodec {
-
+    public static final String EVENT_DATA_ID = "event_data_id";
     private final Serializer serializer;
     private final Deserializer deserializer;
 
@@ -43,18 +49,27 @@ public class KafkaEventCodec implements EventCodec {
         } else {
             eventDataStr = serializer.serialize(publishEvent.getEventData());
         }
+        Headers headers = new RecordHeaders();
+        headers.add(EVENT_DATA_ID, publishEvent.getEventDataId().toString().getBytes(StandardCharsets.UTF_8));
 
-        return new ProducerRecord<>(publishEvent.getEventName(), null, publishEvent.getCreateTime(), publishEvent.getId(), eventDataStr, null);
+        return new ProducerRecord<>(publishEvent.getEventName(), null, publishEvent.getCreateTime(), publishEvent.getId(), eventDataStr, headers);
     }
 
     public PublishEvent decode(ConsumerRecord<Long, String> consumerRecord, Class<?> eventDataClass) {
-        var eventName = consumerRecord.topic();
-        var id = consumerRecord.key();
-        var timestamp = consumerRecord.timestamp();
-        var eventData = deserializer.deserialize(consumerRecord.value(), eventDataClass);
-        var publishEvent = new PublishEvent();
+        String eventName = consumerRecord.topic();
+        long id = consumerRecord.key();
+        Long timestamp = consumerRecord.timestamp();
+        Object eventData = deserializer.deserialize(consumerRecord.value(), eventDataClass);
+        Header eventDataIdHeader = consumerRecord.headers().lastHeader(EVENT_DATA_ID);
+
+        PublishEvent publishEvent = new PublishEvent();
         publishEvent.setId(id);
         publishEvent.setEventName(eventName);
+        if (Objects.nonNull(eventDataIdHeader)) {
+            String eventDataIdStr = new String(eventDataIdHeader.value(), StandardCharsets.UTF_8);
+            long eventDataId = Longs.tryParse(eventDataIdStr);
+            publishEvent.setEventDataId(eventDataId);
+        }
         publishEvent.setCreateTime(timestamp);
         publishEvent.setEventData(eventData);
         return publishEvent;

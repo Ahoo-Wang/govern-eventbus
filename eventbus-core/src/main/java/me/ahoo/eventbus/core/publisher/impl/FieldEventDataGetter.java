@@ -11,33 +11,30 @@
  * limitations under the License.
  */
 
-package me.ahoo.eventbus.core;
+package me.ahoo.eventbus.core.publisher.impl;
 
-import lombok.extern.slf4j.Slf4j;
-import me.ahoo.eventbus.core.annotation.Subscribe;
+import me.ahoo.eventbus.core.publisher.EventDataGetter;
+import me.ahoo.simba.SimbaException;
+
+import java.lang.reflect.Field;
 
 /**
  * @author ahoo wang
  */
-@Slf4j
-public class DemoSubscriber {
+public class FieldEventDataGetter implements EventDataGetter {
+    private final Field eventDataField;
 
-    @Subscribe
-    public void subscriber(AnnotationDemoEvent annotationDemoEvent) {
-        log.info("subscriber");
+    public FieldEventDataGetter(Field eventDataField) {
+        this.eventDataField = eventDataField;
+        eventDataField.setAccessible(true);
     }
 
-    @Subscribe
-    public AnnotationDemoEvent subscriberPublish(AnnotationDemoEvent annotationDemoEvent) {
-        log.info("subscriberThenPublish");
-        return annotationDemoEvent;
+    @Override
+    public Object getEventData(Object targetObject) {
+        try {
+            return eventDataField.get(targetObject);
+        } catch (IllegalAccessException e) {
+            throw new SimbaException(e.getMessage(), e);
+        }
     }
-
-
-    @Subscribe(rePublish = true)
-    public DemoEvent subscriberThenPublishUseIsPublish(DemoEvent demoEvent) {
-        log.info("subscriberThenPublish");
-        return demoEvent;
-    }
-
 }

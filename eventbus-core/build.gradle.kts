@@ -12,7 +12,7 @@
  */
 
 dependencies {
-    api("me.ahoo.cosid:cosid-core")
+    api("me.ahoo.simba:simba-core")
     implementation("org.springframework:spring-context")
     implementation("org.springframework:spring-tx")
     implementation("com.fasterxml.jackson.core:jackson-databind")

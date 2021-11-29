@@ -19,10 +19,7 @@ import me.ahoo.eventbus.core.consistency.ConsistencySubscriberFactory;
 import me.ahoo.eventbus.core.subscriber.Subscriber;
 import me.ahoo.eventbus.core.subscriber.SubscriberRegistry;
 import me.ahoo.eventbus.rabbit.config.RabbitConfig;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Exchange;
-import org.springframework.amqp.core.ExchangeBuilder;
-import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.DirectRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerEndpoint;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -57,7 +54,7 @@ public class RabbitSubscriberRegistry implements SubscriberRegistry {
         this.listenerContainerFactory = new DirectRabbitListenerContainerFactory();
         this.listenerContainerFactory.setConnectionFactory(connectionFactory);
         this.listenerContainerFactory.setContainerCustomizer(container -> {
-            var listenerId = container.getListenerId();
+            String listenerId = container.getListenerId();
             container.setBeanName(listenerId);
         });
         this.rabbitAdmin = new RabbitAdmin(connectionFactory);
@@ -83,12 +80,12 @@ public class RabbitSubscriberRegistry implements SubscriberRegistry {
         if (log.isInfoEnabled()) {
             log.info("initSubscribeQueue - Bind Self {}-> QueueName:[{}],RouterKey:[{}]", exchange, queueName, queueName);
         }
-        var selfBinding = BindingBuilder.bind(subscriberQueue).to(exchange).with(queueName).noargs();
+        Binding selfBinding = BindingBuilder.bind(subscriberQueue).to(exchange).with(queueName).noargs();
         rabbitAdmin.declareBinding(selfBinding);
         if (log.isInfoEnabled()) {
             log.info("initSubscribeQueue - Bind {}-> QueueName:[{}],RouterKey:[{}]", exchange, queueName, subscriber.getSubscribeEventName());
         }
-        var routingKeyBinding = BindingBuilder.bind(subscriberQueue).to(exchange).with(subscriber.getSubscribeEventName()).noargs();
+        Binding routingKeyBinding = BindingBuilder.bind(subscriberQueue).to(exchange).with(subscriber.getSubscribeEventName()).noargs();
         rabbitAdmin.declareBinding(routingKeyBinding);
     }
 

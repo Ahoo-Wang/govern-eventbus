@@ -31,13 +31,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SubscribeAnnotationBeanPostProcessor implements BeanPostProcessor, SmartInstantiationAwareBeanPostProcessor, Ordered {
 
     public static final String BEAN_NAME = SubscribeAnnotationBeanPostProcessor.class.getName();
-    private final SubscriberScanner subscriberScanner;
+    private final SubscriberScanner subscriberParser;
     private final SubscriberRegistry subscriberRegistry;
     private ConcurrentHashMap<String, Object> registeredBeans;
 
-    public SubscribeAnnotationBeanPostProcessor(SubscriberScanner subscriberScanner,
+    public SubscribeAnnotationBeanPostProcessor(SubscriberScanner subscriberParser,
                                                 SubscriberRegistry subscriberRegistry) {
-        this.subscriberScanner = subscriberScanner;
+        this.subscriberParser = subscriberParser;
         this.subscriberRegistry = subscriberRegistry;
         this.registeredBeans = new ConcurrentHashMap<>();
     }
@@ -61,15 +61,13 @@ public class SubscribeAnnotationBeanPostProcessor implements BeanPostProcessor, 
     }
 
     private void register(Object bean, String beanName) {
-        var list = subscriberScanner.scan(bean);
+        var list = subscriberParser.scan(bean);
         if (list.isEmpty()) {
             return;
         }
 
         registeredBeans.computeIfAbsent(beanName, name -> {
-            list.forEach(simpleSubscribeInvocation -> {
-                subscriberRegistry.subscribe(simpleSubscribeInvocation);
-            });
+            list.forEach(subscriberRegistry::subscribe);
             return bean;
         });
     }

@@ -13,10 +13,9 @@
 
 package me.ahoo.eventbus.core.subscriber.impl;
 
-import lombok.Builder;
-import lombok.SneakyThrows;
 import me.ahoo.eventbus.core.publisher.PublishEvent;
 import me.ahoo.eventbus.core.subscriber.Subscriber;
+import me.ahoo.simba.SimbaException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -24,22 +23,36 @@ import java.lang.reflect.Method;
 /**
  * @author ahoo wang
  */
-@Builder
-public class DefaultSubscriber implements Subscriber {
-    private String name;
-    private Object target;
-    private Method method;
-    private String subscribeEventName;
-    private Class<?> subscribeEventClass;
-    private boolean publish;
+public class SimpleSubscriber implements Subscriber {
+    private final String name;
+    private final Object target;
+    private final Method method;
+    private final String subscribeEventName;
+    private final Class<?> subscribeEventClass;
+    private final boolean rePublish;
 
-    @SneakyThrows
+    public SimpleSubscriber(String name,
+                            Object target,
+                            Method method,
+                            String subscribeEventName,
+                            Class<?> subscribeEventClass,
+                            boolean rePublish) {
+        this.name = name;
+        this.target = target;
+        this.method = method;
+        this.subscribeEventName = subscribeEventName;
+        this.subscribeEventClass = subscribeEventClass;
+        this.rePublish = rePublish;
+    }
+
     @Override
     public Object invoke(PublishEvent publishEvent) {
         try {
             return this.method.invoke(this.target, publishEvent.getEventData());
-        } catch (InvocationTargetException invocationTargetEx) {
-            throw invocationTargetEx.getTargetException();
+        } catch (IllegalAccessException illegalAccessException) {
+            throw new SimbaException(illegalAccessException.getMessage(), illegalAccessException);
+        } catch (InvocationTargetException invocationTargetException) {
+            throw new SimbaException(invocationTargetException.getTargetException());
         }
     }
 
@@ -63,7 +76,7 @@ public class DefaultSubscriber implements Subscriber {
         return subscribeEventClass;
     }
 
-    public boolean isPublish() {
-        return publish;
+    public boolean rePublish() {
+        return rePublish;
     }
 }

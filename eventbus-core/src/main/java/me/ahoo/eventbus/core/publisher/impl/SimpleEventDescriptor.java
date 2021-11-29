@@ -13,23 +13,28 @@
 
 package me.ahoo.eventbus.core.publisher.impl;
 
+import me.ahoo.eventbus.core.publisher.EventDataGetter;
+import me.ahoo.eventbus.core.publisher.EventDataIdGetter;
 import me.ahoo.eventbus.core.publisher.EventDescriptor;
 
 /**
  * @author ahoo wang
  */
 public class SimpleEventDescriptor implements EventDescriptor {
-    private final Class<?> eventClass;
+
     private final String eventName;
+    private final Class<?> eventClass;
+    private final EventDataGetter eventDataGetter;
+    private final EventDataIdGetter eventDataIdGetter;
 
-    public SimpleEventDescriptor(String eventName, Class<?> eventClass) {
-        this.eventClass = eventClass;
+    public SimpleEventDescriptor(String eventName,
+                                 Class<?> eventClass,
+                                 EventDataGetter eventDataGetter,
+                                 EventDataIdGetter eventDataIdGetter) {
         this.eventName = eventName;
-    }
-
-    @Override
-    public Class<?> getEventClass() {
-        return eventClass;
+        this.eventClass = eventClass;
+        this.eventDataGetter = eventDataGetter;
+        this.eventDataIdGetter = eventDataIdGetter;
     }
 
     @Override
@@ -38,7 +43,17 @@ public class SimpleEventDescriptor implements EventDescriptor {
     }
 
     @Override
+    public Class<?> getEventClass() {
+        return eventClass;
+    }
+
+    @Override
     public Object getEventData(Object targetObject) {
-        return targetObject;
+        return eventDataGetter.getEventData(targetObject);
+    }
+
+    @Override
+    public long getEventDataId(Object targetObject) {
+        return eventDataIdGetter.getEventDataId(targetObject);
     }
 }

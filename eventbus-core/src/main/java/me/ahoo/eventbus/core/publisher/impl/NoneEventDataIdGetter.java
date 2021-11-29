@@ -11,18 +11,14 @@
  * limitations under the License.
  */
 
-package me.ahoo.eventbus.zookeeper;
+package me.ahoo.eventbus.core.publisher.impl;
 
-import org.apache.curator.framework.CuratorFramework;
+import me.ahoo.eventbus.core.publisher.EventDataIdGetter;
 
 /**
  * @author ahoo wang
- * Creation time 2021/2/23 20:10
- **/
-public class LeaderTests {
-    private final CuratorFramework client = null;
+ */
+public class NoneEventDataIdGetter implements EventDataIdGetter {
+    public static final EventDataIdGetter INSTANCE = new NoneEventDataIdGetter();
 
-    public void test() {
-
-    }
 }

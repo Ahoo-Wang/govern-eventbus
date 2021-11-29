@@ -13,11 +13,15 @@
 
 package me.ahoo.eventbus.core.publisher;
 
+import me.ahoo.eventbus.core.annotation.Event;
+
+import javax.annotation.Nullable;
+
 /**
  * @author ahoo wang
  */
 public interface EventNameGenerator {
 
-    String generate(Class<?> eventClass);
+    String generate(@Nullable Event eventAnnotation, Class<?> eventClass);
 
 }

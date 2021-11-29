@@ -22,6 +22,7 @@ public class SubscribeEventEntity extends SubscribeIdentity {
     private Long subscribeTime;
     private Long eventId;
     private String eventName;
+    private Long eventDataId = 0L;
     private String eventData;
     private Long eventCreateTime;
     private Long createTime;
@@ -48,6 +49,14 @@ public class SubscribeEventEntity extends SubscribeIdentity {
 
     public void setEventName(String eventName) {
         this.eventName = eventName;
+    }
+
+    public Long getEventDataId() {
+        return eventDataId;
+    }
+
+    public void setEventDataId(Long eventDataId) {
+        this.eventDataId = eventDataId;
     }
 
     public String getEventData() {

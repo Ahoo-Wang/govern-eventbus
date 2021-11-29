@@ -13,39 +13,33 @@
 
 package me.ahoo.eventbus.core.publisher.impl;
 
-import lombok.SneakyThrows;
-import me.ahoo.eventbus.core.publisher.EventDescriptor;
+import me.ahoo.eventbus.core.publisher.EventDataIdGetter;
 
 import java.lang.reflect.Field;
+import java.util.Objects;
 
 /**
  * @author ahoo wang
  */
-public class FieldEventDescriptor implements EventDescriptor {
+public class FieldEventDataIdGetter implements EventDataIdGetter {
 
-    private final Field field;
-    private final Class<?> eventClass;
-    private final String eventName;
+    private final Field eventDataIdField;
 
-    public FieldEventDescriptor(String eventName, Field field) {
-        field.setAccessible(true);
-        this.field = field;
-        this.eventClass = field.getType();
-        this.eventName = eventName;
+    public FieldEventDataIdGetter(Field eventDataIdField) {
+        this.eventDataIdField = eventDataIdField;
+        eventDataIdField.setAccessible(true);
     }
 
     @Override
-    public String getEventName() {
-        return eventName;
-    }
-
-    public Class<?> getEventClass() {
-        return eventClass;
-    }
-
-    @SneakyThrows
-    @Override
-    public Object getEventData(Object targetObject) {
-        return field.get(targetObject);
+    public long getEventDataId(Object targetObject) {
+        try {
+            Object eventDataId = eventDataIdField.get(targetObject);
+            if (Objects.isNull(eventDataId)) {
+                return DEFAULT_EVENT_DATA_ID;
+            }
+            return (long) eventDataId;
+        } catch (IllegalAccessException e) {
+            return DEFAULT_EVENT_DATA_ID;
+        }
     }
 }

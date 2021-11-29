@@ -16,6 +16,7 @@ package me.ahoo.eventbus.core.repository;
 import me.ahoo.eventbus.core.repository.entity.PublishEventCompensateEntity;
 import me.ahoo.eventbus.core.repository.entity.PublishEventEntity;
 
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -23,9 +24,13 @@ import java.util.List;
  *
  * @author ahoo wang
  */
-public interface PublishEventRepository extends EventRepository, LeaderRepository {
+public interface PublishEventRepository extends EventRepository {
 
-    PublishIdentity initialize(String eventName, Object eventData);
+    default PublishIdentity initialize(String eventName, Object eventData) {
+        return initialize(eventName, 0L, eventData);
+    }
+
+    PublishIdentity initialize(String eventName, long eventDataId, Object eventData);
 
     int markSucceeded(PublishIdentity publishIdentity) throws ConcurrentVersionConflictException;
 
@@ -37,7 +42,7 @@ public interface PublishEventRepository extends EventRepository, LeaderRepositor
      * @param maxVersion
      * @return
      */
-    List<PublishEventEntity> queryFailed(int limit, long before, int maxVersion);
+    List<PublishEventEntity> queryFailed(int limit, Duration before, int maxVersion);
 
     int compensate(PublishEventCompensateEntity publishEventCompensationEntity);
 

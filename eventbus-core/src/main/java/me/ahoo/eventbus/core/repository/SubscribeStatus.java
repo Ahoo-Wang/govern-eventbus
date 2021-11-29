@@ -23,7 +23,7 @@ public enum SubscribeStatus {
     INITIALIZED(0),
     SUCCEEDED(1),
     FAILED(2);
-    private int value;
+    private final int value;
 
     SubscribeStatus(int value) {
         this.value = value;
@@ -33,7 +33,7 @@ public enum SubscribeStatus {
         return value;
     }
 
-    public static SubscribeStatus valeOf(int value) {
+    public static SubscribeStatus valueOf(int value) {
 
         switch (value) {
             case 0:

@@ -3,5 +3,4 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
   me.ahoo.eventbus.spring.boot.autoconfigure.EventBusAutoConfiguration,\
   me.ahoo.eventbus.spring.boot.autoconfigure.kafka.BusKafkaAutoConfiguration,\
   me.ahoo.eventbus.spring.boot.autoconfigure.rabbit.BusRabbitAutoConfiguration,\
-  me.ahoo.eventbus.spring.boot.autoconfigure.compensate.db.DbCompensateAutoConfiguration,\
-  me.ahoo.eventbus.spring.boot.autoconfigure.compensate.zookeeper.ZookeeperCompensateAutoConfiguration
+  me.ahoo.eventbus.spring.boot.autoconfigure.compensate.CompensateAutoConfiguration

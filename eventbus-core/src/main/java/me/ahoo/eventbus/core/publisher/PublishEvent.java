@@ -22,6 +22,7 @@ import me.ahoo.eventbus.core.repository.Identity;
 public class PublishEvent<TEventData> implements Identity {
     private Long id;
     private String eventName;
+    private Long eventDataId = 0L;
     private TEventData eventData;
     private Long createTime;
 
@@ -39,6 +40,14 @@ public class PublishEvent<TEventData> implements Identity {
 
     public void setEventName(String eventName) {
         this.eventName = eventName;
+    }
+
+    public Long getEventDataId() {
+        return eventDataId;
+    }
+
+    public void setEventDataId(Long eventDataId) {
+        this.eventDataId = eventDataId;
     }
 
     public TEventData getEventData() {

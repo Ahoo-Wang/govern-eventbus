@@ -13,9 +13,12 @@
 
 package me.ahoo.eventbus.demo.event;
 
+import me.ahoo.eventbus.core.annotation.Event;
+
 /**
  * @author ahoo wang
  */
+@Event(dataId = "orderId")
 public class OrderCreatedEvent {
     private long orderId;
 

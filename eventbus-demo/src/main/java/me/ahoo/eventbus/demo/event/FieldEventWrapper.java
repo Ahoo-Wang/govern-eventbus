@@ -13,7 +13,7 @@
 
 package me.ahoo.eventbus.demo.event;
 
-import me.ahoo.eventbus.core.annotation.FieldEvent;
+import me.ahoo.eventbus.core.annotation.Event;
 
 /**
  * @author ahoo wang
@@ -21,7 +21,7 @@ import me.ahoo.eventbus.core.annotation.FieldEvent;
  */
 public class FieldEventWrapper {
     private String resp;
-    @FieldEvent
+    @Event
     private FieldEventData fieldEventData;
 
     public String getResp() {

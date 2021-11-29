@@ -13,10 +13,10 @@
 
 package me.ahoo.eventbus.kafka;
 
-import lombok.var;
 import me.ahoo.eventbus.core.publisher.PublishEvent;
 import me.ahoo.eventbus.core.publisher.PublishException;
 import me.ahoo.eventbus.core.publisher.Publisher;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.kafka.core.KafkaTemplate;
 
 /**
@@ -34,7 +34,7 @@ public class KafkaPublisher implements Publisher {
 
     @Override
     public void publish(PublishEvent event) throws PublishException {
-        var producerRecord = kafkaEventCodec.encode(event);
+        ProducerRecord<Long,String> producerRecord = kafkaEventCodec.encode(event);
 
         kafkaTemplate.send(producerRecord);
     }

@@ -20,9 +20,9 @@ java {
         usingSourceSet(sourceSets[SourceSet.MAIN_SOURCE_SET_NAME])
         capability(group.toString(), "kafka-bus-support", version.toString())
     }
-    registerFeature("zookeeperLeaderSupport") {
+    registerFeature("simbaJdbcSupport") {
         usingSourceSet(sourceSets[SourceSet.MAIN_SOURCE_SET_NAME])
-        capability(group.toString(), "zookeeper-leader-support", version.toString())
+        capability(group.toString(), "simba-jdbc-support", version.toString())
     }
 }
 
@@ -30,7 +30,7 @@ dependencies {
     api(project(":eventbus-core"))
     "rabbitBusSupportImplementation"(project(":eventbus-rabbit"))
     "kafkaBusSupportImplementation"(project(":eventbus-kafka"))
-    "zookeeperLeaderSupportImplementation"(project(":eventbus-zookeeper"))
+    "simbaJdbcSupportImplementation"("me.ahoo.simba:simba-jdbc")
     implementation(project(":eventbus-jdbc"))
     implementation(project(":eventbus-spring-context"))
     implementation("org.springframework.boot:spring-boot-starter")

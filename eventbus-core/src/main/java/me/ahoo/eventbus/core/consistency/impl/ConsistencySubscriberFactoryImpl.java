@@ -29,26 +29,25 @@ public class ConsistencySubscriberFactoryImpl implements ConsistencySubscriberFa
 
     private final ConsistencyPublisher consistencyPublisher;
 
-    private final EventDescriptorParser eventDescriptorParser;
     private final PublishEventRepository publishEventRepository;
     private final SubscribeEventRepository subscribeEventRepository;
     private final PlatformTransactionManager transactionManager;
+    private final EventDescriptorParser eventDescriptorParser;
 
     public ConsistencySubscriberFactoryImpl(ConsistencyPublisher consistencyPublisher,
-                                            EventDescriptorParser eventDescriptorParser,
                                             PublishEventRepository publishEventRepository,
                                             SubscribeEventRepository subscribeEventRepository,
-                                            PlatformTransactionManager transactionManager) {
+                                            PlatformTransactionManager transactionManager, EventDescriptorParser eventDescriptorParser) {
         this.consistencyPublisher = consistencyPublisher;
-        this.eventDescriptorParser = eventDescriptorParser;
         this.publishEventRepository = publishEventRepository;
         this.subscribeEventRepository = subscribeEventRepository;
 
         this.transactionManager = transactionManager;
+        this.eventDescriptorParser = eventDescriptorParser;
     }
 
     @Override
     public ConsistencySubscriber create(Subscriber subscriber) {
-        return new ConsistencySubscriberImpl(subscriber, eventDescriptorParser, consistencyPublisher, publishEventRepository, subscribeEventRepository, transactionManager);
+        return new ConsistencySubscriberImpl(subscriber, consistencyPublisher, publishEventRepository, subscribeEventRepository, transactionManager, eventDescriptorParser);
     }
 }

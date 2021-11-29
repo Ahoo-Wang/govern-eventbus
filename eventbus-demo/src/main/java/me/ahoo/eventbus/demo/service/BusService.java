@@ -16,6 +16,8 @@ package me.ahoo.eventbus.demo.service;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.var;
+import me.ahoo.cosid.IdGenerator;
+import me.ahoo.cosid.snowflake.SafeJavaScriptSnowflakeId;
 import me.ahoo.eventbus.core.annotation.Publish;
 import me.ahoo.eventbus.core.annotation.Subscribe;
 import me.ahoo.eventbus.demo.event.FieldEventData;
@@ -26,7 +28,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.LongAdder;
 
 /**
  * @author ahoo wang
@@ -38,7 +39,11 @@ public class BusService {
 
     @Autowired
     private BusService proxyBusService;
-    private final LongAdder longAdder = new LongAdder();
+    private final IdGenerator idGenerator;
+
+    public BusService() {
+        idGenerator = SafeJavaScriptSnowflakeId.ofMillisecond(0);
+    }
 
     /**
      * publish use proxy.
@@ -63,9 +68,9 @@ public class BusService {
     @Publish
     public PublishDataEvent publish() {
         log.info("publish");
-        longAdder.increment();
         var event = new PublishDataEvent();
-        event.setId(longAdder.longValue());
+
+        event.setId(idGenerator.generate());
         return event;
     }
 
@@ -87,9 +92,8 @@ public class BusService {
     @Subscribe("subscribeThenPublish.customizeQueue")
     public RePublishDataEvent subscribeThenPublish(PublishDataEvent publishDataEvent) {
         log.info("rePublish->>id:{}", publishDataEvent.getId());
-        longAdder.increment();
         var event = new RePublishDataEvent();
-        event.setId(longAdder.longValue());
+        event.setId(idGenerator.generate());
         return event;
     }
 

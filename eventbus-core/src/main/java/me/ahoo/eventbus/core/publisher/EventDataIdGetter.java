@@ -11,17 +11,20 @@
  * limitations under the License.
  */
 
-package me.ahoo.eventbus.core.annotation;
-
-import java.lang.annotation.*;
+package me.ahoo.eventbus.core.publisher;
 
 /**
- * 字段事件
- *
  * @author ahoo wang
  */
-@Target({ElementType.FIELD})
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-public @interface FieldEvent {
+public interface EventDataIdGetter {
+    String DEFAULT_ID_FIELD_NAME = "id";
+    long DEFAULT_EVENT_DATA_ID = 0;
+
+    default long getEventDataId(Object targetObject) {
+        return DEFAULT_EVENT_DATA_ID;
+    }
+
+    static boolean availableType(Class<?> idType) {
+        return  Long.class.equals(idType) || Long.TYPE.equals(idType);
+    }
 }

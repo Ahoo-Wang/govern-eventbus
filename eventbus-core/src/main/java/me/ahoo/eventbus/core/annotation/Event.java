@@ -13,12 +13,14 @@
 
 package me.ahoo.eventbus.core.annotation;
 
+import me.ahoo.eventbus.core.publisher.EventDataIdGetter;
+
 import java.lang.annotation.*;
 
 /**
  * @author ahoo wang
  */
-@Target({ElementType.TYPE})
+@Target({ElementType.TYPE, ElementType.FIELD})
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Event {
@@ -31,4 +33,11 @@ public @interface Event {
      * @return event name
      */
     String value() default "";
+
+    /**
+     * event data id's field name
+     *
+     * @return event data id's field name
+     */
+    String dataId() default EventDataIdGetter.DEFAULT_ID_FIELD_NAME;
 }

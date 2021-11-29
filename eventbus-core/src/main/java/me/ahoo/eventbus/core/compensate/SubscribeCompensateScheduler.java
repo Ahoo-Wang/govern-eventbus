@@ -16,7 +16,6 @@ package me.ahoo.eventbus.core.compensate;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import lombok.extern.slf4j.Slf4j;
-import lombok.var;
 import me.ahoo.eventbus.core.publisher.PublishEvent;
 import me.ahoo.eventbus.core.repository.SubscribeEventRepository;
 import me.ahoo.eventbus.core.repository.entity.SubscribeEventCompensateEntity;
@@ -24,6 +23,8 @@ import me.ahoo.eventbus.core.repository.entity.SubscribeEventEntity;
 import me.ahoo.eventbus.core.serialize.Deserializer;
 import me.ahoo.eventbus.core.subscriber.Subscriber;
 import me.ahoo.eventbus.core.subscriber.SubscriberRegistry;
+import me.ahoo.simba.core.MutexContendServiceFactory;
+import me.ahoo.simba.schedule.ScheduleConfig;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -32,17 +33,19 @@ import java.util.concurrent.TimeUnit;
  * @author ahoo wang
  */
 @Slf4j
-public abstract class AbstractSubscribeCompensate implements SubscribeCompensate {
-    protected volatile boolean running;
+public class SubscribeCompensateScheduler extends AbstractCompensateScheduler {
+
     private final CompensateConfig compensateConfig;
     private final Deserializer deserializer;
     private final SubscriberRegistry subscriberRegistry;
     protected final SubscribeEventRepository subscribeEventRepository;
 
-    protected AbstractSubscribeCompensate(CompensateConfig compensateConfig,
-                                          Deserializer deserializer,
-                                          SubscriberRegistry subscriberRegistry,
-                                          SubscribeEventRepository subscribeEventRepository) {
+    public SubscribeCompensateScheduler(CompensateConfig compensateConfig,
+                                        ScheduleConfig scheduleConfig,
+                                        Deserializer deserializer,
+                                        SubscriberRegistry subscriberRegistry,
+                                        SubscribeEventRepository subscribeEventRepository, MutexContendServiceFactory contendServiceFactory) {
+        super("eventbus_subscribe_leader", scheduleConfig, contendServiceFactory);
         this.compensateConfig = compensateConfig;
         this.deserializer = deserializer;
         this.subscriberRegistry = subscriberRegistry;
@@ -50,62 +53,35 @@ public abstract class AbstractSubscribeCompensate implements SubscribeCompensate
     }
 
     @Override
-    public void start() {
-        if (running) {
-            return;
-        }
-        running = true;
-        start0();
+    protected String getWorker() {
+        return "SubscribeCompensateScheduler";
     }
-
-    protected abstract void start0();
 
     @Override
-    public void stop() {
-        if (!running) {
-            return;
-        }
-        running = false;
-        stop0();
-    }
-
-    protected abstract void stop0();
-
-    @Override
-    public boolean isRunning() {
-        return running;
-    }
-
-    protected void schedule() {
-        if (log.isInfoEnabled()) {
-            log.info("schedule - start.");
-        }
-
+    protected void work() {
         try {
-            var failedEntities = queryFailed();
-            if (failedEntities.isEmpty()) {
+            List<SubscribeEventEntity> failedEvents = subscribeEventRepository.queryFailed(
+                    compensateConfig.getBatch(),
+                    compensateConfig.getBefore(),
+                    compensateConfig.getMaxVersion());
+            if (failedEvents.isEmpty()) {
                 if (log.isInfoEnabled()) {
-                    log.info("schedule - can not find any failed subscribe event!");
+                    log.info("work - can not find any failed subscribe event!");
                 }
                 return;
             }
-            for (SubscribeEventEntity failedEntity : failedEntities) {
-                compensate(failedEntity);
+            for (SubscribeEventEntity failedEvent : failedEvents) {
+                compensate(failedEvent);
             }
         } catch (Throwable throwable) {
-            log.error("schedule - error", throwable);
+            if (log.isErrorEnabled()) {
+                log.error(throwable.getMessage(), throwable);
+            }
         }
     }
 
-    protected List<SubscribeEventEntity> queryFailed() {
-        return subscribeEventRepository.queryFailed(
-                compensateConfig.getBatch(),
-                compensateConfig.getBefore(),
-                compensateConfig.getMaxVersion());
-    }
-
     protected void compensate(SubscribeEventEntity failedEntity) {
-        var subscribeEventCompensationEntity = SubscribeEventCompensateEntity.builder()
+        SubscribeEventCompensateEntity subscribeEventCompensationEntity = SubscribeEventCompensateEntity.builder()
                 .subscribeEventId(failedEntity.getId())
                 .startTime(System.currentTimeMillis())
                 .build();
@@ -113,35 +89,39 @@ public abstract class AbstractSubscribeCompensate implements SubscribeCompensate
             log.info("compensate - SubscribeEvent -> id:[{}] ,version:[{}].", failedEntity.getId(), failedEntity.getVersion());
         }
         Stopwatch stopwatch = Stopwatch.createStarted();
-        var subscriber = subscriberRegistry.getSubscriber(failedEntity.getSubscriberName());
-        var publishEventWrapper = convert(failedEntity, subscriber);
+        Subscriber subscriber = subscriberRegistry.getSubscriber(failedEntity.getSubscriberName());
+        PublishEvent publishEventWrapper = convert(failedEntity, subscriber);
 
         try {
             subscriber.invoke(publishEventWrapper);
         } catch (Throwable throwable) {
-            log.error(throwable.getMessage(), throwable);
-            var failedMsg = Throwables.getStackTraceAsString(throwable);
+            if (log.isErrorEnabled()) {
+                log.error(throwable.getMessage(), throwable);
+            }
+
+            String failedMsg = Throwables.getStackTraceAsString(throwable);
             subscribeEventCompensationEntity.setFailedMsg(failedMsg);
         }
 
         try {
-            var taken = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+            long taken = stopwatch.elapsed(TimeUnit.MILLISECONDS);
             subscribeEventCompensationEntity.setTaken(taken);
             subscribeEventRepository.compensate(subscribeEventCompensationEntity);
         } catch (Throwable throwable) {
-            log.error(throwable.getMessage(), throwable);
+            if (log.isErrorEnabled()) {
+                log.error(throwable.getMessage(), throwable);
+            }
         }
     }
 
     private PublishEvent convert(SubscribeEventEntity subscribeEventEntity, Subscriber subscriber) {
-        var eventTypedData = deserializer.deserialize(subscribeEventEntity.getEventData(), subscriber.getSubscribeEventClass());
-        var publishEvent = new PublishEvent();
+        Object eventTypedData = deserializer.deserialize(subscribeEventEntity.getEventData(), subscriber.getSubscribeEventClass());
+        PublishEvent publishEvent = new PublishEvent();
         publishEvent.setId(subscribeEventEntity.getEventId());
         publishEvent.setEventName(subscribeEventEntity.getEventName());
         publishEvent.setEventData(eventTypedData);
         publishEvent.setCreateTime(subscribeEventEntity.getEventCreateTime());
         return publishEvent;
     }
-
 
 }

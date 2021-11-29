@@ -13,7 +13,7 @@
 
 package me.ahoo.eventbus.kafka;
 
-import lombok.var;
+import me.ahoo.eventbus.core.consistency.ConsistencySubscriber;
 import me.ahoo.eventbus.core.consistency.ConsistencySubscriberFactory;
 import me.ahoo.eventbus.core.publisher.PublishEvent;
 import me.ahoo.eventbus.core.subscriber.Subscriber;
@@ -52,14 +52,14 @@ public class KafkaSubscriberRegistry implements SubscriberRegistry {
 
     @Override
     public void subscribe(Subscriber subscriber) {
-        var consistencySubscriber = subscriberFactory.create(subscriber);
+        ConsistencySubscriber consistencySubscriber = subscriberFactory.create(subscriber);
         registerListener(consistencySubscriber);
         registerSubscriber(consistencySubscriber);
     }
 
     private void registerListener(Subscriber subscriber) {
         MethodKafkaListenerAdapter methodKafkaListenerAdapter = new MethodKafkaListenerAdapter(kafkaEventCodec, subscriber);
-        var endpoint = new MethodKafkaListenerEndpoint<Long, PublishEvent>();
+        MethodKafkaListenerEndpoint endpoint = new MethodKafkaListenerEndpoint<Long, PublishEvent>();
         endpoint.setBean(methodKafkaListenerAdapter);
         endpoint.setMethod(MethodKafkaListenerAdapter.getInvokeMethod());
         endpoint.setId(subscriber.getName());

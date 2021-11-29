@@ -34,5 +34,5 @@ public interface Subscriber {
 
     Class<?> getSubscribeEventClass();
 
-    boolean isPublish();
+    boolean rePublish();
 }

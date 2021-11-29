@@ -32,5 +32,5 @@ public @interface Subscribe {
      */
     String value() default "";
 
-    boolean isPublish() default false;
+    boolean rePublish() default false;
 }

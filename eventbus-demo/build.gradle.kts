@@ -36,7 +36,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     runtimeOnly("mysql:mysql-connector-java")
-
+    api("me.ahoo.cosid:cosid-core")
     implementation(project(":eventbus-spring-boot-starter"))
     implementation(project(":eventbus-spring-boot-autoconfigure")) {
         capabilities {
@@ -48,11 +48,11 @@ dependencies {
 //            requireCapability("me.ahoo.eventbus:kafka-bus-support")
 //        }
 //    }
-//    implementation(project(":eventbus-spring-boot-autoconfigure")) {
-//        capabilities {
-//            requireCapability("me.ahoo.eventbus:zookeeper-leader-support")
-//        }
-//    }
+    implementation(project(":eventbus-spring-boot-autoconfigure")) {
+        capabilities {
+            requireCapability("me.ahoo.eventbus:simba-jdbc-support")
+        }
+    }
 
 //    implementation("org.springframework.cloud:spring-cloud-zookeeper-core")
 

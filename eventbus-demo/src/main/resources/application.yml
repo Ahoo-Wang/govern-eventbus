@@ -1,9 +1,9 @@
-logging:
-  level:
-    me.ahoo.eventbus: debug
-    org:
-      springframework:
-        jdbc: info
+#logging:
+#  level:
+#    me.ahoo: debug
+#    org:
+#      springframework:
+#        jdbc: info
 spring:
   application:
     name: eventbus-demo
@@ -23,36 +23,20 @@ spring:
 #      sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required username="admin" password="admin";
 #    listener:
 #      missing-topics-fatal: false
-#  cloud:
-#    zookeeper:
-#      connect-string: localhost:2181
 
 govern:
   eventbus:
     rabbit:
       exchange: eventbus
     compensate:
-      db:
-        publish:
-          schedule:
-            initial-delay: 30
-            period: 10
-        subscribe:
-          schedule:
-            initial-delay: 30
-            period: 10
-        enabled: true
-    #      zookeeper:
-    #        enabled: false
-    #        publish:
-    #          leader-prefix: /eventbus/${spring.application.name}
-    #          schedule:
-    #            initial-delay: 30
-    #            period: 10
-    #        subscribe:
-    #          leader-prefix: /eventbus/${spring.application.name}
-    #          schedule:
-    #            initial-delay: 30
-    #            period: 10
+      publish:
+        schedule:
+          initial-delay: 30s
+          period: 10s
+      subscribe:
+        schedule:
+          initial-delay: 30s
+          period: 10s
+      enabled: true
     subscriber:
       prefix: ${spring.application.name}.

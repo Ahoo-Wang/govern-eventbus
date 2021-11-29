@@ -20,7 +20,6 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-import lombok.var;
 import me.ahoo.eventbus.core.consistency.ConsistencyPublisher;
 import me.ahoo.eventbus.core.consistency.ConsistencySubscriberFactory;
 import me.ahoo.eventbus.core.consistency.impl.ConsistencyPublisherImpl;
@@ -28,7 +27,6 @@ import me.ahoo.eventbus.core.consistency.impl.ConsistencySubscriberFactoryImpl;
 import me.ahoo.eventbus.core.publisher.EventDescriptorParser;
 import me.ahoo.eventbus.core.publisher.EventNameGenerator;
 import me.ahoo.eventbus.core.publisher.Publisher;
-import me.ahoo.eventbus.core.publisher.impl.SimpleEventDescriptorParser;
 import me.ahoo.eventbus.core.publisher.impl.SimpleEventNameGenerator;
 import me.ahoo.eventbus.core.repository.PublishEventRepository;
 import me.ahoo.eventbus.core.repository.SubscribeEventRepository;
@@ -82,7 +80,7 @@ public class EventBusAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public ObjectMapper objectMapper() {
-        var objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         JavaTimeModule timeModule = new JavaTimeModule();
 
@@ -115,7 +113,7 @@ public class EventBusAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public EventDescriptorParser eventDescriptorParser(EventNameGenerator eventNameGenerator) {
-        return new SimpleEventDescriptorParser(eventNameGenerator);
+        return new EventDescriptorParser(eventNameGenerator);
     }
 
     @Bean
@@ -139,19 +137,19 @@ public class EventBusAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public ConsistencyPublisher consistencyPublisher(Publisher publisher,
-                                                     EventDescriptorParser eventDescriptorParser,
                                                      PublishEventRepository publishEventRepository,
-                                                     PlatformTransactionManager transactionManager) {
-        return new ConsistencyPublisherImpl(publisher, eventDescriptorParser, publishEventRepository, transactionManager);
+                                                     PlatformTransactionManager transactionManager,
+                                                     EventDescriptorParser eventDescriptorParser) {
+        return new ConsistencyPublisherImpl(publisher, publishEventRepository, transactionManager, eventDescriptorParser);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public ConsistencySubscriberFactory consistencySubscriberFactory(ConsistencyPublisher consistencyPublisher,
-                                                                     EventDescriptorParser eventDescriptorParser,
                                                                      PublishEventRepository publishEventRepository,
                                                                      SubscribeEventRepository subscribeEventRepository,
-                                                                     PlatformTransactionManager transactionManager) {
-        return new ConsistencySubscriberFactoryImpl(consistencyPublisher, eventDescriptorParser, publishEventRepository, subscribeEventRepository, transactionManager);
+                                                                     PlatformTransactionManager transactionManager,
+                                                                     EventDescriptorParser eventDescriptorParser) {
+        return new ConsistencySubscriberFactoryImpl(consistencyPublisher, publishEventRepository, subscribeEventRepository, transactionManager, eventDescriptorParser);
     }
 }

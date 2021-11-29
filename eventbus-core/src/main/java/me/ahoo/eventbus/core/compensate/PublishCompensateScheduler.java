@@ -16,12 +16,13 @@ package me.ahoo.eventbus.core.compensate;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import lombok.extern.slf4j.Slf4j;
-import lombok.var;
 import me.ahoo.eventbus.core.consistency.ConsistencyPublisher;
 import me.ahoo.eventbus.core.repository.PublishEventRepository;
 import me.ahoo.eventbus.core.repository.PublishIdentity;
 import me.ahoo.eventbus.core.repository.entity.PublishEventCompensateEntity;
 import me.ahoo.eventbus.core.repository.entity.PublishEventEntity;
+import me.ahoo.simba.core.MutexContendServiceFactory;
+import me.ahoo.simba.schedule.ScheduleConfig;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -30,59 +31,38 @@ import java.util.concurrent.TimeUnit;
  * @author ahoo wang
  */
 @Slf4j
-public abstract class AbstractPublishCompensate implements PublishCompensate {
+public class PublishCompensateScheduler extends AbstractCompensateScheduler {
 
-    protected volatile boolean running;
     private final CompensateConfig compensateConfig;
     private final ConsistencyPublisher consistencyPublisher;
     protected final PublishEventRepository publishEventRepository;
 
-    protected AbstractPublishCompensate(
-            CompensateConfig compensateConfig,
-            ConsistencyPublisher consistencyPublisher,
-            PublishEventRepository publishEventRepository) {
+    public PublishCompensateScheduler(CompensateConfig compensateConfig,
+                                      ScheduleConfig scheduleConfig,
+                                      ConsistencyPublisher consistencyPublisher,
+                                      PublishEventRepository publishEventRepository,
+                                      MutexContendServiceFactory contendServiceFactory) {
+        super("eventbus_publish_leader", scheduleConfig, contendServiceFactory);
         this.compensateConfig = compensateConfig;
         this.consistencyPublisher = consistencyPublisher;
         this.publishEventRepository = publishEventRepository;
     }
 
     @Override
-    public void start() {
-        if (running) {
-            return;
-        }
-        running = true;
-        start0();
+    protected String getWorker() {
+        return "PublishCompensateScheduler";
     }
-
-    protected abstract void start0();
 
     @Override
-    public void stop() {
-        if (!running) {
-            return;
-        }
-        running = false;
-        stop0();
-    }
-
-    protected abstract void stop0();
-
-    @Override
-    public boolean isRunning() {
-        return running;
-    }
-
-    protected void schedule() {
-        if (log.isDebugEnabled()) {
-            log.debug("schedule - start.");
-        }
-
+    protected void work() {
         try {
-            var failedEvents = queryFailed();
+            List<PublishEventEntity> failedEvents = publishEventRepository.queryFailed(
+                    compensateConfig.getBatch(),
+                    compensateConfig.getBefore(),
+                    compensateConfig.getMaxVersion());
             if (failedEvents.isEmpty()) {
                 if (log.isInfoEnabled()) {
-                    log.info("schedule - can not find any failed publish event!");
+                    log.info("work - can not find any failed publish event!");
                 }
                 return;
             }
@@ -90,19 +70,14 @@ public abstract class AbstractPublishCompensate implements PublishCompensate {
                 compensate(failedEvent);
             }
         } catch (Throwable throwable) {
-            log.error("schedule - error", throwable);
+            if (log.isErrorEnabled()) {
+                log.error(throwable.getMessage(), throwable);
+            }
         }
     }
 
-    protected List<PublishEventEntity> queryFailed() {
-        return publishEventRepository.queryFailed(
-                compensateConfig.getBatch(),
-                compensateConfig.getBefore(),
-                compensateConfig.getMaxVersion());
-    }
-
     protected void compensate(PublishEventEntity failedEvent) {
-        var publishEventCompensationEntity = PublishEventCompensateEntity.builder()
+        PublishEventCompensateEntity publishEventCompensationEntity = PublishEventCompensateEntity.builder()
                 .publishEventId(failedEvent.getId())
                 .startTime(System.currentTimeMillis())
                 .build();
@@ -112,7 +87,7 @@ public abstract class AbstractPublishCompensate implements PublishCompensate {
                 log.info("compensate - PublishEvent -> id:[{}] ,version:[{}].", failedEvent.getId(), failedEvent.getVersion());
             }
 
-            var publishIdentity = new PublishIdentity();
+            PublishIdentity publishIdentity = new PublishIdentity();
             publishIdentity.setId(failedEvent.getId());
             publishIdentity.setEventName(failedEvent.getEventName());
             publishIdentity.setStatus(failedEvent.getStatus());
@@ -125,16 +100,21 @@ public abstract class AbstractPublishCompensate implements PublishCompensate {
             compensatePublishEvent.setCreateTime(failedEvent.getCreateTime());
             consistencyPublisher.publish(publishIdentity, compensatePublishEvent).get();
         } catch (Throwable throwable) {
-            var failedMsg = Throwables.getStackTraceAsString(throwable);
+            if (log.isErrorEnabled()) {
+                log.error(throwable.getMessage(), throwable);
+            }
+            String failedMsg = Throwables.getStackTraceAsString(throwable);
             publishEventCompensationEntity.setFailedMsg(failedMsg);
         }
 
         try {
-            var taken = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+            long taken = stopwatch.elapsed(TimeUnit.MILLISECONDS);
             publishEventCompensationEntity.setTaken(taken);
             publishEventRepository.compensate(publishEventCompensationEntity);
         } catch (Throwable throwable) {
-            log.error(throwable.getMessage(), throwable);
+            if (log.isErrorEnabled()) {
+                log.error(throwable.getMessage(), throwable);
+            }
         }
     }
 

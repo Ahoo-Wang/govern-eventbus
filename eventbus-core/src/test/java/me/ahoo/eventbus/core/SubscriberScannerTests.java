@@ -16,7 +16,6 @@ package me.ahoo.eventbus.core;
 import lombok.var;
 import me.ahoo.eventbus.core.publisher.EventDescriptorParser;
 import me.ahoo.eventbus.core.publisher.EventNameGenerator;
-import me.ahoo.eventbus.core.publisher.impl.SimpleEventDescriptorParser;
 import me.ahoo.eventbus.core.publisher.impl.SimpleEventNameGenerator;
 import me.ahoo.eventbus.core.subscriber.SubscriberNameGenerator;
 import me.ahoo.eventbus.core.subscriber.SubscriberScanner;
@@ -34,7 +33,7 @@ public class SubscriberScannerTests {
 
     public SubscriberScannerTests() {
         EventNameGenerator eventNameGenerator = new SimpleEventNameGenerator();
-        EventDescriptorParser eventDescriptorParser = new SimpleEventDescriptorParser(eventNameGenerator);
+        EventDescriptorParser eventDescriptorParser = new EventDescriptorParser(eventNameGenerator);
         SubscriberNameGenerator subscriberNameGenerator = new SimpleSubscriberNameGenerator("eventbus-");
         this.subscriberScanner = new SubscriberScanner(subscriberNameGenerator, eventDescriptorParser);
     }

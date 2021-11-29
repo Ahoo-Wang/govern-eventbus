@@ -22,5 +22,6 @@ public interface Publisher {
      * @throws PublishException
      */
     void publish(PublishEvent event) throws PublishException;
+
 }
 

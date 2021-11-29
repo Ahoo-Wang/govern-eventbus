@@ -15,7 +15,6 @@ package me.ahoo.eventbus.rabbit;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import lombok.var;
 import me.ahoo.eventbus.core.codec.EventCodec;
 import me.ahoo.eventbus.core.compensate.CompensatePublishEvent;
 import me.ahoo.eventbus.core.publisher.PublishEvent;
@@ -26,6 +25,8 @@ import org.springframework.amqp.core.MessageBuilder;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.core.MessagePropertiesBuilder;
 
+import java.util.Objects;
+
 
 /**
  * @author ahoo wang
@@ -34,7 +35,9 @@ public class RabbitEventCodec implements EventCodec {
 
     public static final String EVENT_ID = "event_id";
     public static final String EVENT_NAME = "event_name";
+    public static final String EVENT_DATA_ID = "event_data_id";
     public static final String EVENT_CREATE_TIME = "event_create_time";
+
     private final Serializer serializer;
     private final Deserializer deserializer;
 
@@ -44,10 +47,11 @@ public class RabbitEventCodec implements EventCodec {
     }
 
     public Message encode(PublishEvent publishEvent) {
-        var eventName = publishEvent.getEventName();
+        String eventName = publishEvent.getEventName();
 
         MessageProperties messageProperties = MessagePropertiesBuilder.newInstance()
                 .setHeaderIfAbsent(EVENT_ID, publishEvent.getId())
+                .setHeaderIfAbsent(EVENT_DATA_ID, publishEvent.getEventDataId())
                 .setHeaderIfAbsent(EVENT_NAME, eventName)
                 .setHeaderIfAbsent(EVENT_CREATE_TIME, publishEvent.getCreateTime()).build();
 
@@ -61,20 +65,25 @@ public class RabbitEventCodec implements EventCodec {
     }
 
     public PublishEvent decode(Message message, Class<?> eventDataClass) {
-        var messageProperties = message.getMessageProperties();
+        MessageProperties messageProperties = message.getMessageProperties();
         Long eventId = messageProperties.getHeader(EVENT_ID);
         Preconditions.checkNotNull(eventId, "%s can not be null.", EVENT_ID);
 
         String eventName = messageProperties.getHeader(EVENT_NAME);
         Preconditions.checkNotNull(eventName, "%s can not be null.", EVENT_NAME);
 
+        Long eventDataId = messageProperties.getHeader(EVENT_DATA_ID);
+
         Long eventCreateTime = messageProperties.getHeader(EVENT_CREATE_TIME);
         Preconditions.checkNotNull(eventCreateTime, "%s can not be null.", EVENT_CREATE_TIME);
 
-        var typedEventData = deserializer.deserialize(new String(message.getBody(), Charsets.UTF_8), eventDataClass);
-        var publishEvent = new PublishEvent();
+        Object typedEventData = deserializer.deserialize(new String(message.getBody(), Charsets.UTF_8), eventDataClass);
+        PublishEvent publishEvent = new PublishEvent();
         publishEvent.setId(eventId);
         publishEvent.setEventName(eventName);
+        if (Objects.nonNull(eventDataId)) {
+            publishEvent.setEventDataId(eventDataId);
+        }
         publishEvent.setEventData(typedEventData);
         publishEvent.setCreateTime(eventCreateTime);
         return publishEvent;

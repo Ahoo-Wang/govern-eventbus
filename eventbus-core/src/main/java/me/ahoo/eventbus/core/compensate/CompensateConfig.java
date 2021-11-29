@@ -13,15 +13,16 @@
 
 package me.ahoo.eventbus.core.compensate;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 /**
  * @author ahoo wang
  */
 public class CompensateConfig {
+
     private Integer maxVersion = 10;
     private Integer batch = 10;
-    private long before = TimeUnit.MINUTES.toMillis(5);
+    private Duration before = Duration.ofMinutes(1);
 
     public Integer getMaxVersion() {
         return maxVersion;
@@ -39,11 +40,11 @@ public class CompensateConfig {
         this.batch = batch;
     }
 
-    public long getBefore() {
+    public Duration getBefore() {
         return before;
     }
 
-    public void setBefore(long before) {
+    public void setBefore(Duration before) {
         this.before = before;
     }
 }

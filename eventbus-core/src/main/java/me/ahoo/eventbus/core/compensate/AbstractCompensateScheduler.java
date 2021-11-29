@@ -13,8 +13,26 @@
 
 package me.ahoo.eventbus.core.compensate;
 
+import lombok.extern.slf4j.Slf4j;
+import me.ahoo.simba.core.MutexContendServiceFactory;
+import me.ahoo.simba.schedule.AbstractScheduler;
+import me.ahoo.simba.schedule.ScheduleConfig;
+
 /**
  * @author ahoo wang
  */
-public interface SubscribeCompensate extends EventCompensate {
+@Slf4j
+public abstract class AbstractCompensateScheduler extends AbstractScheduler implements EventCompensate {
+
+
+    public AbstractCompensateScheduler(String mutex,
+                                       ScheduleConfig scheduleConfig,
+                                       MutexContendServiceFactory contendServiceFactory) {
+        super(mutex, scheduleConfig, contendServiceFactory);
+    }
+
+    protected abstract String getWorker();
+
+    protected abstract void work();
+
 }

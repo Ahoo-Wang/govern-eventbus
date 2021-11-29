@@ -13,9 +13,8 @@
 
 package me.ahoo.eventbus.kafka;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import lombok.var;
+import me.ahoo.eventbus.core.publisher.PublishEvent;
 import me.ahoo.eventbus.core.subscriber.Subscriber;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.listener.MessageListener;
@@ -29,7 +28,6 @@ import java.lang.reflect.Method;
 @Slf4j
 public class MethodKafkaListenerAdapter implements MessageListener<Long, String> {
 
-    @Getter
     private final static Method invokeMethod;
     private final KafkaEventCodec kafkaEventCodec;
 
@@ -41,6 +39,11 @@ public class MethodKafkaListenerAdapter implements MessageListener<Long, String>
         }
     }
 
+    public static Method getInvokeMethod(){
+        return invokeMethod;
+    }
+
+
     private final Subscriber subscriber;
 
     public MethodKafkaListenerAdapter(KafkaEventCodec kafkaEventCodec, Subscriber subscriber) {
@@ -51,13 +54,13 @@ public class MethodKafkaListenerAdapter implements MessageListener<Long, String>
     @Override
     public void onMessage(ConsumerRecord<Long, String> data) {
         try {
-            var publishEvent = kafkaEventCodec.decode(data, subscriber.getSubscribeEventClass());
+            PublishEvent publishEvent = kafkaEventCodec.decode(data, subscriber.getSubscribeEventClass());
             if (log.isInfoEnabled()) {
                 log.info("onMessage - received event subscriber:[{}]-> id:[{}] ,eventName:[{}].", subscriber.getName(), publishEvent.getId(), publishEvent.getEventName());
             }
             this.subscriber.invoke(publishEvent);
         } catch (Throwable throwable) {
-            var payloadStr = data.value();
+            String payloadStr = data.value();
             log.error(String.format("onMessage - received event ERROR -> routeKey:[%s] , payload: %n  %s", subscriber.getSubscribeEventName(), payloadStr), throwable);
         }
     }

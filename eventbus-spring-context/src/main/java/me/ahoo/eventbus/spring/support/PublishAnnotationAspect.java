@@ -45,7 +45,7 @@ public class PublishAnnotationAspect {
             try {
                 return proceedingJoinPoint.proceed();
             } catch (Throwable throwable) {
-                throw new EventBusException(throwable);
+                throw new EventBusException(throwable.getMessage(), throwable);
             }
         });
     }

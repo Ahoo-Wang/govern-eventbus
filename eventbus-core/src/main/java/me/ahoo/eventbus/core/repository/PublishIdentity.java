@@ -19,6 +19,7 @@ package me.ahoo.eventbus.core.repository;
 public class PublishIdentity implements Version, Identity {
     private Long id;
     private String eventName;
+    private Long eventDataId = 0L;
     private PublishStatus status;
     private Integer version;
     private Long createTime;
@@ -37,6 +38,14 @@ public class PublishIdentity implements Version, Identity {
 
     public void setEventName(String eventName) {
         this.eventName = eventName;
+    }
+
+    public Long getEventDataId() {
+        return eventDataId;
+    }
+
+    public void setEventDataId(Long eventDataId) {
+        this.eventDataId = eventDataId;
     }
 
     public PublishStatus getStatus() {

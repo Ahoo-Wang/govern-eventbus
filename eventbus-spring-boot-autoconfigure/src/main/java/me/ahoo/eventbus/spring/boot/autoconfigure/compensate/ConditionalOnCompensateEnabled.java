@@ -11,7 +11,7 @@
  * limitations under the License.
  */
 
-package me.ahoo.eventbus.spring.boot.autoconfigure.compensate.db;
+package me.ahoo.eventbus.spring.boot.autoconfigure.compensate;
 
 import me.ahoo.eventbus.spring.boot.autoconfigure.EnabledSuffix;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
-@ConditionalOnProperty(value = DbCompensateProperties.PREFIX + EnabledSuffix.SUFFIX, havingValue = "true", matchIfMissing = true)
-public @interface ConditionalOnDbCompensateEnabled {
+@ConditionalOnProperty(value = CompensatePrefix.PREFIX + EnabledSuffix.SUFFIX, havingValue = "true", matchIfMissing = true)
+public @interface ConditionalOnCompensateEnabled {
 
 }

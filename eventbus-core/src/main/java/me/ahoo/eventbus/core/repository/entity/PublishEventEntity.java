@@ -24,7 +24,6 @@ public class PublishEventEntity extends PublishEvent<String> {
     private Integer version;
     private Long publishedTime;
 
-
     public PublishStatus getStatus() {
         return status;
     }

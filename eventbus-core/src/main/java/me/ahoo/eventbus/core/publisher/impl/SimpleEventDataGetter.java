@@ -11,10 +11,16 @@
  * limitations under the License.
  */
 
-dependencies {
-    implementation(project(":eventbus-core"))
-    implementation("org.springframework:spring-context")
-    api("org.apache.curator:curator-recipes")
-}
+package me.ahoo.eventbus.core.publisher.impl;
 
-description = "eventbus-zookeeper"
+import me.ahoo.eventbus.core.publisher.EventDataGetter;
+
+/**
+ * @author ahoo wang
+ */
+public class SimpleEventDataGetter implements EventDataGetter {
+    @Override
+    public Object getEventData(Object targetObject) {
+        return targetObject;
+    }
+}

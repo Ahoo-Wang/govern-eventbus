@@ -38,11 +38,12 @@ public interface PublishEventRepository extends EventRepository {
 
     /**
      * @param limit
-     * @param before     {@link java.util.concurrent.TimeUnit#MILLISECONDS}
+     * @param before
+     * @param range
      * @param maxVersion
      * @return
      */
-    List<PublishEventEntity> queryFailed(int limit, Duration before, int maxVersion);
+    List<PublishEventEntity> queryFailed(int limit, int maxVersion, Duration before, Duration range);
 
     int compensate(PublishEventCompensateEntity publishEventCompensationEntity);
 

@@ -35,7 +35,7 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:${rootProject.ext.get("lombokVersion")}")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    runtimeOnly("mysql:mysql-connector-java")
+    runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
     api("me.ahoo.cosid:cosid-core")
     implementation(project(":eventbus-spring-boot-starter"))
     implementation(project(":eventbus-spring-boot-autoconfigure")) {
@@ -55,7 +55,8 @@ dependencies {
     }
 
 //    implementation("org.springframework.cloud:spring-cloud-zookeeper-core")
-
+    implementation("me.ahoo.cosid:cosid-spring-boot-starter")
+//    implementation("org.apache.shardingsphere:shardingsphere-jdbc-core-spring-boot-starter:${rootProject.ext.get("shardingsphereVersion")}")
 
 }
 

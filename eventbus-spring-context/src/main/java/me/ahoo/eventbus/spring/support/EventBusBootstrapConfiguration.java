@@ -30,9 +30,9 @@ public class EventBusBootstrapConfiguration implements ImportBeanDefinitionRegis
                     new RootBeanDefinition(PublishAnnotationAspect.class));
         }
 
-        if (!registry.containsBeanDefinition(SubscribeAnnotationBeanPostProcessor.BEAN_NAME)) {
-            registry.registerBeanDefinition(SubscribeAnnotationBeanPostProcessor.BEAN_NAME,
-                    new RootBeanDefinition(SubscribeAnnotationBeanPostProcessor.class));
+        if (!registry.containsBeanDefinition(SubscriberLifecycle.BEAN_NAME)) {
+            registry.registerBeanDefinition(SubscriberLifecycle.BEAN_NAME,
+                    new RootBeanDefinition(SubscriberLifecycle.class));
         }
 
     }

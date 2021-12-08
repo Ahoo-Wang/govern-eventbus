@@ -52,7 +52,7 @@ public class ConsistencyPublisherImpl implements ConsistencyPublisher, AutoClose
         this.eventDescriptorParser = eventDescriptorParser;
 
         executorService = new ThreadPoolExecutor(EXECUTOR_CORE_POOL_SIZE, EXECUTOR_MAX_POOL_SIZE,
-                10L, TimeUnit.MILLISECONDS,
+                1, TimeUnit.MINUTES,
                 new ArrayBlockingQueue<>(EXECUTOR_BLOCKING_QUEUE_SIZE), Threads.defaultFactory("ConsistencyPublisher"));
 
         this.publisher = publisher;

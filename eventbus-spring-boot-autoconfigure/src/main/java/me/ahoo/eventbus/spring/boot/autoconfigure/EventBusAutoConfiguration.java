@@ -20,6 +20,7 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import me.ahoo.cosid.provider.IdGeneratorProvider;
 import me.ahoo.eventbus.core.consistency.ConsistencyPublisher;
 import me.ahoo.eventbus.core.consistency.ConsistencySubscriberFactory;
 import me.ahoo.eventbus.core.consistency.impl.ConsistencyPublisherImpl;
@@ -39,9 +40,11 @@ import me.ahoo.eventbus.core.subscriber.SubscriberScanner;
 import me.ahoo.eventbus.core.subscriber.impl.SimpleSubscriberNameGenerator;
 import me.ahoo.eventbus.jdbc.JdbcPublishEventRepository;
 import me.ahoo.eventbus.jdbc.JdbcSubscribeEventRepository;
-import me.ahoo.eventbus.spring.annotation.EnableEventBus;
+import me.ahoo.eventbus.spring.support.PublishAnnotationAspect;
+import me.ahoo.eventbus.spring.support.SubscriberLifecycle;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -54,8 +57,7 @@ import java.time.format.DateTimeFormatter;
 /**
  * @author : ahoo wang
  */
-@Configuration
-@EnableEventBus
+@Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties({EventBusProperties.class})
 public class EventBusAutoConfiguration {
 
@@ -124,14 +126,26 @@ public class EventBusAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public PublishEventRepository publishEventRepository(Serializer serializer, NamedParameterJdbcTemplate jdbcTemplate) {
-        return new JdbcPublishEventRepository(serializer, jdbcTemplate);
+    public PublishEventRepository publishEventRepository(Serializer serializer, NamedParameterJdbcTemplate jdbcTemplate, IdGeneratorProvider idGeneratorProvider) {
+        return new JdbcPublishEventRepository(serializer, jdbcTemplate, idGeneratorProvider);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public SubscribeEventRepository subscribeEventRepository(Serializer serializer, NamedParameterJdbcTemplate jdbcTemplate) {
-        return new JdbcSubscribeEventRepository(serializer, jdbcTemplate);
+    public PublishAnnotationAspect publishAnnotationAspect(ConsistencyPublisher consistencyPublisher) {
+        return new PublishAnnotationAspect(consistencyPublisher);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public SubscriberLifecycle subscribeAnnotationBeanPostProcessor(ApplicationContext applicationContext) {
+        return new SubscriberLifecycle(applicationContext);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public SubscribeEventRepository subscribeEventRepository(Serializer serializer, NamedParameterJdbcTemplate jdbcTemplate, IdGeneratorProvider idGeneratorProvider) {
+        return new JdbcSubscribeEventRepository(serializer, jdbcTemplate, idGeneratorProvider);
     }
 
     @Bean

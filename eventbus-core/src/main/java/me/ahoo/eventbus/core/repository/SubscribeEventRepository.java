@@ -62,11 +62,12 @@ public interface SubscribeEventRepository extends EventRepository {
     /***
      *
      * @param limit
-     * @param before {@link java.util.concurrent.TimeUnit#MILLISECONDS}
      * @param maxVersion
+     * @param before
+     * @param range
      * @return failed event
      */
-    List<SubscribeEventEntity> queryFailed(int limit, Duration before, int maxVersion);
+    List<SubscribeEventEntity> queryFailed(int limit, int maxVersion, Duration before, Duration range);
 
     int compensate(SubscribeEventCompensateEntity subscribeEventCompensationEntity);
 

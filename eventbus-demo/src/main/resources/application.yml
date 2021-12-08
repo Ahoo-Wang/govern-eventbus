@@ -7,14 +7,51 @@
 spring:
   application:
     name: eventbus-demo
-  datasource:
-    url: jdbc:mysql://localhost:3306/eventbus_db?serverTimezone=GMT%2B8&characterEncoding=utf-8
-    username: root
-    password: root
   rabbitmq:
     host: localhost
     username: eventbus
     password: eventbus
+  datasource:
+    url: jdbc:mariadb://localhost:3306/eventbus_db
+    username: root
+    password: root
+
+#  shardingsphere:
+#    datasource:
+#      names: ds0
+#      ds0:
+#        type: com.zaxxer.hikari.HikariDataSource
+#        jdbcUrl: jdbc:mariadb://localhost:3306/eventbus_db?serverTimezone=GMT%2B8&characterEncoding=utf-8
+#        username: root
+#        password: root
+#    props:
+#      sql-show: true
+#    rules:
+#      sharding:
+#        tables:
+#          publish_event:
+#            actual-data-nodes: ds0.publish_event_202112
+#            table-strategy:
+#              standard:
+#                sharding-column: create_time
+#                sharding-algorithm-name: event-bus-interval
+#          subscribe_event:
+#            actual-data-nodes: ds0.subscribe_event_202112
+#            table-strategy:
+#              standard:
+#                sharding-column: event_create_time
+#                sharding-algorithm-name: event-bus-interval
+#        sharding-algorithms:
+#          event-bus-interval:
+#            type: INTERVAL
+#            props:
+#              datetime-pattern: yyyy-MM-dd HH:mm:ss
+#              datetime-lower: 2021-12-01 00:00:00
+#              datetime-upper: 2022-12-31 23:59:59
+#              sharding-suffix-pattern: yyyyMM
+#              datetime-interval-unit: MONTHS
+#              datetime-interval-amount: 1
+
 #  kafka:
 #    bootstrap-servers: localhost:9092
 #    properties:
@@ -40,3 +77,14 @@ govern:
       enabled: true
     subscriber:
       prefix: ${spring.application.name}.
+
+cosid:
+  snowflake:
+    enabled: true
+    machine:
+      distributor:
+        manual:
+          machine-id: 1
+    provider:
+      eventbus:
+        clockSync: true

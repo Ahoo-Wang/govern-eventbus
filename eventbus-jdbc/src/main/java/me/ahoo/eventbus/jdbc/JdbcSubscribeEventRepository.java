@@ -14,6 +14,7 @@
 package me.ahoo.eventbus.jdbc;
 
 import com.google.common.base.Throwables;
+import me.ahoo.cosid.provider.IdGeneratorProvider;
 import me.ahoo.eventbus.core.publisher.PublishEvent;
 import me.ahoo.eventbus.core.repository.*;
 import me.ahoo.eventbus.core.repository.entity.SubscribeEventCompensateEntity;
@@ -23,7 +24,6 @@ import me.ahoo.eventbus.core.subscriber.Subscriber;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
 
 import java.time.Duration;
 import java.util.List;
@@ -33,22 +33,26 @@ import java.util.Optional;
  * @author ahoo wang
  */
 public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
+
     private final Serializer serializer;
     private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final IdGeneratorProvider idGeneratorProvider;
 
     public JdbcSubscribeEventRepository(Serializer serializer
-            , NamedParameterJdbcTemplate jdbcTemplate) {
+            , NamedParameterJdbcTemplate jdbcTemplate, IdGeneratorProvider idGeneratorProvider) {
         this.serializer = serializer;
         this.jdbcTemplate = jdbcTemplate;
+        this.idGeneratorProvider = idGeneratorProvider;
     }
 
     private static final String SQL_GET_SUBSCRIBE_EVENT = "select id,status,version from subscribe_event " +
-            "where event_id=:event_id and event_name=:event_name and subscribe_name=:subscribe_name limit 1;";
+            "where event_id=:event_id and event_name=:event_name and subscribe_name=:subscribe_name and event_create_time=:event_create_time limit 1;";
 
-    private Optional<SubscribeIdentity> getSubscribeIdentity(Subscriber subscriber, Long eventId, String eventName) {
-        MapSqlParameterSource getSubscribeEventParams = new MapSqlParameterSource("event_id", eventId);
-        getSubscribeEventParams.addValue("event_name", eventName);
+    private Optional<SubscribeIdentity> getSubscribeIdentity(Subscriber subscriber, PublishEvent subscribePublishEvent) {
+        MapSqlParameterSource getSubscribeEventParams = new MapSqlParameterSource("event_id", subscribePublishEvent.getId());
+        getSubscribeEventParams.addValue("event_name", subscribePublishEvent.getEventName());
         getSubscribeEventParams.addValue("subscribe_name", subscriber.getName());
+        getSubscribeEventParams.addValue("event_create_time", subscribePublishEvent.getCreateTime());
         try {
             SubscribeIdentity subscribeIdentity = jdbcTemplate.queryForObject(SQL_GET_SUBSCRIBE_EVENT, getSubscribeEventParams, (rs, rowNum) -> {
                 long id = rs.getLong("id");
@@ -59,6 +63,7 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
                 _subscribeIdentity.setSubscriberName(subscriber.getName());
                 _subscribeIdentity.setStatus(SubscribeStatus.valueOf(status));
                 _subscribeIdentity.setVersion(version);
+                _subscribeIdentity.setEventCreateTime(subscribePublishEvent.getCreateTime());
                 return _subscribeIdentity;
             });
             return Optional.of(subscribeIdentity);
@@ -67,17 +72,19 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
         }
     }
 
-    private static final String SQL_SUBSCRIBE_INITIALIZED = "insert subscribe_event(subscribe_name, status,subscribe_time, event_id, event_name, event_data_id,event_data, event_create_time, version,create_time)" +
-            "values (:subscribe_name, :status,:subscribe_time, :event_id, :event_name, :event_data_id,:event_data, :event_create_time, :version,:create_time);";
+    private static final String SQL_SUBSCRIBE_INITIALIZED = "insert subscribe_event(id,subscribe_name, status,subscribe_time, event_id, event_name, event_data_id,event_data, event_create_time, version,create_time)" +
+            "values (:id,:subscribe_name, :status,:subscribe_time, :event_id, :event_name, :event_data_id,:event_data, :event_create_time, :version,:create_time);";
 
     private SubscribeIdentity initializeSubscribeIdentity(Subscriber subscriber, PublishEvent subscribePublishEvent, String eventName) {
         SubscribeIdentity subscribeIdentity = new SubscribeIdentity();
-
+        subscribeIdentity.setId(JdbcPublishEventRepository.generateId(idGeneratorProvider));
         subscribeIdentity.setStatus(SubscribeStatus.INITIALIZED);
         subscribeIdentity.setVersion(Version.INITIAL_VALUE);
         subscribeIdentity.setSubscriberName(subscriber.getName());
+        subscribeIdentity.setEventCreateTime(subscribePublishEvent.getCreateTime());
 
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("subscribe_name", subscriber.getName());
+        sqlParams.addValue("id", subscribeIdentity.getId());
         sqlParams.addValue("status", subscribeIdentity.getStatus().getValue());
         sqlParams.addValue("subscribe_time", System.currentTimeMillis());
         sqlParams.addValue("event_id", subscribePublishEvent.getId());
@@ -85,19 +92,18 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
         sqlParams.addValue("event_data_id", subscribePublishEvent.getEventDataId());
         String eventData = serializer.serialize(subscribePublishEvent.getEventData());
         sqlParams.addValue("event_data", eventData);
-        sqlParams.addValue("event_create_time", subscribePublishEvent.getCreateTime());
+        sqlParams.addValue("event_create_time", subscribeIdentity.getEventCreateTime());
         sqlParams.addValue("version", subscribeIdentity.getVersion());
         sqlParams.addValue("create_time", System.currentTimeMillis());
-        GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbcTemplate.update(SQL_SUBSCRIBE_INITIALIZED, sqlParams, keyHolder);
-        subscribeIdentity.setId(keyHolder.getKey().longValue());
+
+        jdbcTemplate.update(SQL_SUBSCRIBE_INITIALIZED, sqlParams);
         return subscribeIdentity;
     }
 
     @Override
     public SubscribeIdentity initialize(Subscriber subscriber, PublishEvent subscribePublishEvent) throws RepeatedSubscribeException {
         String eventName = subscribePublishEvent.getEventName();
-        Optional<SubscribeIdentity> subscribeIdentity = getSubscribeIdentity(subscriber, subscribePublishEvent.getId(), eventName);
+        Optional<SubscribeIdentity> subscribeIdentity = getSubscribeIdentity(subscriber, subscribePublishEvent);
         if (subscribeIdentity.isPresent()) {
             if (subscribeIdentity.get().getStatus().equals(SubscribeStatus.SUCCEEDED)) {
                 throw new RepeatedSubscribeException(subscriber, subscribePublishEvent);
@@ -120,12 +126,13 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
     }
 
     private static final String SQL_MARK_SUCCEEDED
-            = "update subscribe_event set status=1,version=version+1 where id=:id and version=:version;";
+            = "update subscribe_event set status=1,version=version+1 where id=:id and version=:version and event_create_time=:event_create_time limit 1;";
 
     @Override
     public int markSucceeded(SubscribeIdentity subscribeIdentity) {
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("id", subscribeIdentity.getId());
         sqlParams.addValue("version", subscribeIdentity.getVersion());
+        sqlParams.addValue("event_create_time", subscribeIdentity.getEventCreateTime());
         int affected = jdbcTemplate.update(SQL_MARK_SUCCEEDED, sqlParams);
         checkAffected(subscribeIdentity, affected);
         return affected;
@@ -133,7 +140,7 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
 
 
     private static final String SQL_MARK_FAILED
-            = "update subscribe_event set status=2,version=version+1 where id=:id and version=:version;";
+            = "update subscribe_event set status=2,version=version+1 where id=:id and version=:version and event_create_time=:event_create_time limit 1;";
 
     /**
      * 1. insert failed log
@@ -150,6 +157,7 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
 
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("id", subscribeIdentity.getId());
         sqlParams.addValue("version", subscribeIdentity.getVersion());
+        sqlParams.addValue("event_create_time", subscribeIdentity.getEventCreateTime());
         int affected = jdbcTemplate.update(SQL_MARK_FAILED, sqlParams);
         checkAffected(subscribeIdentity, affected);
         return affected;
@@ -168,20 +176,23 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
 
     private static final String SQL_QUERY_FAILED
             = "select id, subscribe_name, status, subscribe_time, event_id, event_name,event_data_id, event_data, event_create_time, version, create_time from subscribe_event " +
-            "where status<>1 and create_time<:before and version<:max_version order by version asc limit :limit;";
+            "where status<>1 and event_create_time between :lower and :upper and version<:max_version order by version asc limit :limit;";
 
     /***
      *
      * @param limit
-     * @param before {@link java.util.concurrent.TimeUnit#MILLISECONDS}
      * @param maxVersion
+     * @param before
+     * @param range
      * @return
      */
     @Override
-    public List<SubscribeEventEntity> queryFailed(int limit, Duration before, int maxVersion) {
+    public List<SubscribeEventEntity> queryFailed(int limit, int maxVersion, Duration before, Duration range) {
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("max_version", maxVersion);
-        long beforeTime = System.currentTimeMillis() - before.toMillis();
-        sqlParams.addValue("before", beforeTime);
+        long upperTime = System.currentTimeMillis() - before.toMillis();
+        long lowerTime = upperTime - range.toMillis();
+        sqlParams.addValue("lower", lowerTime);
+        sqlParams.addValue("upper", upperTime);
         sqlParams.addValue("limit", limit);
         return jdbcTemplate.query(SQL_QUERY_FAILED, sqlParams, (rs, rowNum) -> {
             long id = rs.getLong("id");

@@ -58,8 +58,9 @@ public class PublishCompensateScheduler extends AbstractCompensateScheduler {
         try {
             List<PublishEventEntity> failedEvents = publishEventRepository.queryFailed(
                     compensateConfig.getBatch(),
+                    compensateConfig.getMaxVersion(),
                     compensateConfig.getBefore(),
-                    compensateConfig.getMaxVersion());
+                    compensateConfig.getRange());
             if (failedEvents.isEmpty()) {
                 if (log.isInfoEnabled()) {
                     log.info("work - can not find any failed publish event!");

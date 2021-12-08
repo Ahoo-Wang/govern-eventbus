@@ -23,6 +23,7 @@ public class CompensateConfig {
     private Integer maxVersion = 10;
     private Integer batch = 10;
     private Duration before = Duration.ofMinutes(1);
+    private Duration range = Duration.ofDays(7);
 
     public Integer getMaxVersion() {
         return maxVersion;
@@ -38,6 +39,14 @@ public class CompensateConfig {
 
     public void setBatch(Integer batch) {
         this.batch = batch;
+    }
+
+    public Duration getRange() {
+        return range;
+    }
+
+    public void setRange(Duration range) {
+        this.range = range;
     }
 
     public Duration getBefore() {

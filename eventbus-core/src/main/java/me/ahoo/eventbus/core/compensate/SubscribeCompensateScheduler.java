@@ -62,8 +62,9 @@ public class SubscribeCompensateScheduler extends AbstractCompensateScheduler {
         try {
             List<SubscribeEventEntity> failedEvents = subscribeEventRepository.queryFailed(
                     compensateConfig.getBatch(),
+                    compensateConfig.getMaxVersion(),
                     compensateConfig.getBefore(),
-                    compensateConfig.getMaxVersion());
+                    compensateConfig.getRange());
             if (failedEvents.isEmpty()) {
                 if (log.isInfoEnabled()) {
                     log.info("work - can not find any failed subscribe event!");

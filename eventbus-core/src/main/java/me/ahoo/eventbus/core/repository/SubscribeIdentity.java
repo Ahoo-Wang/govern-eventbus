@@ -22,7 +22,7 @@ public class SubscribeIdentity implements Version, Identity {
     private SubscribeStatus status;
     private Integer taken;
     private Integer version;
-
+    private Long eventCreateTime;
     public Long getId() {
         return id;
     }
@@ -61,5 +61,13 @@ public class SubscribeIdentity implements Version, Identity {
 
     public void setVersion(Integer version) {
         this.version = version;
+    }
+
+    public Long getEventCreateTime() {
+        return eventCreateTime;
+    }
+
+    public void setEventCreateTime(Long eventCreateTime) {
+        this.eventCreateTime = eventCreateTime;
     }
 }

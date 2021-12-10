@@ -20,7 +20,6 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-import me.ahoo.cosid.provider.IdGeneratorProvider;
 import me.ahoo.eventbus.core.consistency.ConsistencyPublisher;
 import me.ahoo.eventbus.core.consistency.ConsistencySubscriberFactory;
 import me.ahoo.eventbus.core.consistency.impl.ConsistencyPublisherImpl;
@@ -126,8 +125,8 @@ public class EventBusAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public PublishEventRepository publishEventRepository(Serializer serializer, NamedParameterJdbcTemplate jdbcTemplate, IdGeneratorProvider idGeneratorProvider) {
-        return new JdbcPublishEventRepository(serializer, jdbcTemplate, idGeneratorProvider);
+    public PublishEventRepository publishEventRepository(Serializer serializer, NamedParameterJdbcTemplate jdbcTemplate) {
+        return new JdbcPublishEventRepository(serializer, jdbcTemplate);
     }
 
     @Bean
@@ -144,8 +143,8 @@ public class EventBusAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public SubscribeEventRepository subscribeEventRepository(Serializer serializer, NamedParameterJdbcTemplate jdbcTemplate, IdGeneratorProvider idGeneratorProvider) {
-        return new JdbcSubscribeEventRepository(serializer, jdbcTemplate, idGeneratorProvider);
+    public SubscribeEventRepository subscribeEventRepository(Serializer serializer, NamedParameterJdbcTemplate jdbcTemplate) {
+        return new JdbcSubscribeEventRepository(serializer, jdbcTemplate);
     }
 
     @Bean

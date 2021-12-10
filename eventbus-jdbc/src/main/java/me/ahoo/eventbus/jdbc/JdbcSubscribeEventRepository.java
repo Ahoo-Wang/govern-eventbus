@@ -14,7 +14,7 @@
 package me.ahoo.eventbus.jdbc;
 
 import com.google.common.base.Throwables;
-import me.ahoo.cosid.provider.IdGeneratorProvider;
+import me.ahoo.cosid.provider.LazyIdGenerator;
 import me.ahoo.eventbus.core.publisher.PublishEvent;
 import me.ahoo.eventbus.core.repository.*;
 import me.ahoo.eventbus.core.repository.entity.SubscribeEventCompensateEntity;
@@ -36,13 +36,13 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
 
     private final Serializer serializer;
     private final NamedParameterJdbcTemplate jdbcTemplate;
-    private final IdGeneratorProvider idGeneratorProvider;
+    private final LazyIdGenerator lazyIdGenerator;
 
     public JdbcSubscribeEventRepository(Serializer serializer
-            , NamedParameterJdbcTemplate jdbcTemplate, IdGeneratorProvider idGeneratorProvider) {
+            , NamedParameterJdbcTemplate jdbcTemplate) {
         this.serializer = serializer;
         this.jdbcTemplate = jdbcTemplate;
-        this.idGeneratorProvider = idGeneratorProvider;
+        this.lazyIdGenerator = new LazyIdGenerator(JdbcPublishEventRepository.EVENT_BUS_ID_NAME);
     }
 
     private static final String SQL_GET_SUBSCRIBE_EVENT = "select id,status,version from subscribe_event " +
@@ -77,7 +77,7 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
 
     private SubscribeIdentity initializeSubscribeIdentity(Subscriber subscriber, PublishEvent subscribePublishEvent, String eventName) {
         SubscribeIdentity subscribeIdentity = new SubscribeIdentity();
-        subscribeIdentity.setId(JdbcPublishEventRepository.generateId(idGeneratorProvider));
+        subscribeIdentity.setId(lazyIdGenerator.generate());
         subscribeIdentity.setStatus(SubscribeStatus.INITIALIZED);
         subscribeIdentity.setVersion(Version.INITIAL_VALUE);
         subscribeIdentity.setSubscriberName(subscriber.getName());

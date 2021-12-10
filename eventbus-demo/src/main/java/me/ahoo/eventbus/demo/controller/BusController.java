@@ -16,7 +16,6 @@ package me.ahoo.eventbus.demo.controller;
 import me.ahoo.eventbus.demo.event.FieldEventWrapper;
 import me.ahoo.eventbus.demo.event.PublishDataEvent;
 import me.ahoo.eventbus.demo.service.BusService;
-import org.springframework.context.ApplicationContext;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,17 +29,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class BusController {
 
     public final BusService busService;
-    private final ApplicationContext applicationContext;
 
-    public BusController(BusService busService,
-                         ApplicationContext applicationContext) {
+    public BusController(BusService busService) {
         this.busService = busService;
-        this.applicationContext = applicationContext;
     }
 
     @GetMapping("publish")
     public PublishDataEvent publish() {
-        applicationContext.getBeansOfType(BusService.class);
         return busService.publish();
     }
 

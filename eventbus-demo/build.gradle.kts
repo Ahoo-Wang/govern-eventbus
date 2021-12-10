@@ -56,8 +56,8 @@ dependencies {
 
 //    implementation("org.springframework.cloud:spring-cloud-zookeeper-core")
     implementation("me.ahoo.cosid:cosid-spring-boot-starter")
-//    implementation("org.apache.shardingsphere:shardingsphere-jdbc-core-spring-boot-starter:${rootProject.ext.get("shardingsphereVersion")}")
-
+    implementation("me.ahoo.cosid:cosid-shardingsphere")
+    implementation("org.apache.shardingsphere:shardingsphere-jdbc-core-spring-boot-starter:${rootProject.ext.get("shardingsphereVersion")}")
 }
 
 tasks.withType<Test> {

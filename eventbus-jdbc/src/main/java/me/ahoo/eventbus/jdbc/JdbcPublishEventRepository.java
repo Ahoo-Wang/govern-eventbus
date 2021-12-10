@@ -13,10 +13,8 @@
 
 package me.ahoo.eventbus.jdbc;
 
-import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import me.ahoo.cosid.IdGenerator;
-import me.ahoo.cosid.provider.IdGeneratorProvider;
+import me.ahoo.cosid.provider.LazyIdGenerator;
 import me.ahoo.eventbus.core.repository.*;
 import me.ahoo.eventbus.core.repository.entity.PublishEventCompensateEntity;
 import me.ahoo.eventbus.core.repository.entity.PublishEventEntity;
@@ -31,33 +29,17 @@ import java.util.List;
  * @author ahoo wang
  */
 public class JdbcPublishEventRepository implements PublishEventRepository {
+    public final static String EVENT_BUS_ID_NAME = "eventbus";
+
     private final Serializer serializer;
     private final NamedParameterJdbcTemplate jdbcTemplate;
-    private final IdGeneratorProvider idGeneratorProvider;
-
+    private final LazyIdGenerator lazyIdGenerator;
     public JdbcPublishEventRepository(Serializer serializer
-            , NamedParameterJdbcTemplate jdbcTemplate, IdGeneratorProvider idGeneratorProvider) {
+            , NamedParameterJdbcTemplate jdbcTemplate) {
         this.serializer = serializer;
         this.jdbcTemplate = jdbcTemplate;
-        this.idGeneratorProvider = idGeneratorProvider;
+        this.lazyIdGenerator=new LazyIdGenerator(EVENT_BUS_ID_NAME);
     }
-
-    private static volatile IdGenerator LAZY_ID_GEN;
-    private final static String EVENT_BUS_ID_NAME = "eventbus";
-
-    public static IdGenerator getEventBusIdGen(IdGeneratorProvider idGeneratorProvider) {
-        if (LAZY_ID_GEN != null) {
-            return LAZY_ID_GEN;
-        }
-        LAZY_ID_GEN = idGeneratorProvider.get(EVENT_BUS_ID_NAME)
-                .orElseThrow(() -> new IllegalStateException(Strings.lenientFormat("CosId:[%s] Not Found!", EVENT_BUS_ID_NAME)));
-        return LAZY_ID_GEN;
-    }
-
-    public static long generateId(IdGeneratorProvider idGeneratorProvider) {
-        return getEventBusIdGen(idGeneratorProvider).generate();
-    }
-
 
     private static final String SQL_INITIALIZED
             = "insert publish_event (id,event_name, event_data_id,event_data, status,version,create_time) values (:id,:event_name,:event_data_id, :event_data, :status,:version,:create_time);";
@@ -65,7 +47,7 @@ public class JdbcPublishEventRepository implements PublishEventRepository {
     @Override
     public PublishIdentity initialize(String eventName, long eventDataId, Object eventData) {
         PublishIdentity publishIdentity = new PublishIdentity();
-        publishIdentity.setId(JdbcPublishEventRepository.generateId(idGeneratorProvider));
+        publishIdentity.setId(lazyIdGenerator.generate());
         publishIdentity.setStatus(PublishStatus.INITIALIZED);
         publishIdentity.setVersion(Version.INITIAL_VALUE);
         publishIdentity.setEventName(eventName);

@@ -36,7 +36,6 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
-    api("me.ahoo.cosid:cosid-core")
     implementation(project(":eventbus-spring-boot-starter"))
     implementation(project(":eventbus-spring-boot-autoconfigure")) {
         capabilities {
@@ -55,6 +54,7 @@ dependencies {
     }
 
 //    implementation("org.springframework.cloud:spring-cloud-zookeeper-core")
+    api("me.ahoo.cosid:cosid-jdbc")
     implementation("me.ahoo.cosid:cosid-spring-boot-starter")
     implementation("me.ahoo.cosid:cosid-shardingsphere")
     implementation("org.apache.shardingsphere:shardingsphere-jdbc-core-spring-boot-starter:${rootProject.ext.get("shardingsphereVersion")}")

@@ -1,6 +1,6 @@
-#logging:
-#  level:
-#    me.ahoo: debug
+logging:
+  level:
+    me.ahoo: debug
 #    org:
 #      springframework:
 #        jdbc: info
@@ -30,34 +30,34 @@ spring:
       sharding:
         tables:
           publish_event:
-            actual-data-nodes: ds0.publish_event_202112,ds0.publish_event_$->{202201..202212}
+            actual-data-nodes: ds0.publish_event_$->{202110..202112},ds0.publish_event_$->{202201..202212}
             table-strategy:
               standard:
                 sharding-column: create_time
                 sharding-algorithm-name: publish-event-interval
           subscribe_event:
-            actual-data-nodes: ds0.subscribe_event_202112,ds0.subscribe_event_$->{202201..202212}
+            actual-data-nodes: ds0.subscribe_event_$->{202110..202112},ds0.subscribe_event_$->{202201..202212}
             table-strategy:
               standard:
                 sharding-column: event_create_time
                 sharding-algorithm-name: subscribe-event-interval
         sharding-algorithms:
           publish-event-interval:
-            type: COSID_INTERVAL_TS
+            type: COSID_INTERVAL
             props:
-              logic-name: publish_event
-              datetime-lower: 2021-12-01T00:00:00
-              datetime-upper: 2022-12-31T23:59:59
-              sharding-suffix-pattern: _yyyyMM
+              logic-name-prefix: publish_event_
+              datetime-lower: 2021-10-01 00:00:00
+              datetime-upper: 2022-12-31 23:59:59
+              sharding-suffix-pattern: yyyyMM
               datetime-interval-unit: MONTHS
               datetime-interval-amount: 1
           subscribe-event-interval:
-            type: COSID_INTERVAL_TS
+            type: COSID_INTERVAL
             props:
-              logic-name: subscribe_event
-              datetime-lower: 2021-12-01T00:00:00
-              datetime-upper: 2022-12-31T23:59:59
-              sharding-suffix-pattern: _yyyyMM
+              logic-name-prefix: subscribe_event_
+              datetime-lower: 2021-10-01 00:00:00
+              datetime-upper: 2022-12-31 23:59:59
+              sharding-suffix-pattern: yyyyMM
               datetime-interval-unit: MONTHS
               datetime-interval-amount: 1
 
@@ -79,6 +79,7 @@ govern:
         schedule:
           initial-delay: 30s
           period: 10s
+        range: 60D
       subscribe:
         schedule:
           initial-delay: 30s
@@ -88,12 +89,15 @@ govern:
       prefix: ${spring.application.name}.
 
 cosid:
-  snowflake:
+  namespace: ${spring.application.name}
+  segment:
     enabled: true
-    machine:
-      distributor:
-        manual:
-          machine-id: 1
+    mode: chain
+    chain:
+      safe-distance: 1
+    distributor:
+      jdbc:
+        enable-auto-init-id-segment: true
     provider:
       eventbus:
-        clock-sync: true
+        step: 100

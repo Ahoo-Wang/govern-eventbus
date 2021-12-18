@@ -12,7 +12,7 @@
  */
 
 plugins {
-    id("io.codearte.nexus-staging")
+    id("io.github.gradle-nexus.publish-plugin") version ("1.1.0")
 }
 
 val bomProjects = listOf(
@@ -27,12 +27,12 @@ val libraryProjects = subprojects - bomProjects
 ext {
     set("lombokVersion", "1.18.20")
     set("springBootVersion", "2.4.13")
-    set("springCloudVersion", "2020.0.4")
+    set("springCloudVersion", "2020.0.5")
     set("jmhVersion", "1.29")
     set("guavaVersion", "30.0-jre")
     set("springfoxVersion", "3.0.0")
-    set("cosIdVersion", "1.4.5")
-    set("simbaVersion", "0.2.2")
+    set("cosIdVersion", "1.4.15")
+    set("simbaVersion", "0.2.5")
     set("shardingsphereVersion","5.0.0")
     set("libraryProjects", libraryProjects)
 }
@@ -77,6 +77,8 @@ configure(libraryProjects) {
         this.add("implementation", "org.slf4j:slf4j-api")
         this.add("testImplementation", "ch.qos.logback:logback-classic")
         this.add("testImplementation", "org.junit.jupiter:junit-jupiter-api")
+        this.add("testImplementation", "org.junit.jupiter:junit-jupiter-params")
+        this.add("testImplementation", "org.junit-pioneer:junit-pioneer")
         this.add("testRuntimeOnly", "org.junit.jupiter:junit-jupiter-engine")
     }
 }
@@ -92,15 +94,11 @@ configure(publishProjects) {
                 url = uri(layout.buildDirectory.dir("repos"))
             }
             maven {
-                name = "sonatypeRepo"
-                url = if (version.toString().endsWith("SNAPSHOT"))
-                    uri("https://oss.sonatype.org/content/repositories/snapshots")
-                else
-                    uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/Ahoo-Wang/govern-eventbus")
                 credentials {
-                    username = getPropertyOf("ossrhUsername")
-                    password = getPropertyOf("ossrhPassword")
+                    username = project.findProperty("gitHubPackagesUserName") as String
+                    password = project.findProperty("gitHubPackagesToken") as String
                 }
             }
         }
@@ -150,10 +148,10 @@ configure(publishProjects) {
     }
 }
 
-nexusStaging {
-    username = getPropertyOf("ossrhUsername")
-    password = getPropertyOf("ossrhPassword")
-    packageGroup = "me.ahoo"
+nexusPublishing {
+    repositories {
+        sonatype()
+    }
 }
 
 fun getPropertyOf(name: String) = project.properties[name]?.toString()

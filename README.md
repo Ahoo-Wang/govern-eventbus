@@ -119,7 +119,7 @@ values ('eventbus_subscribe_leader', 0, 0, 0, '', 0);
 > Kotlin DSL
 
 ```kotlin
-    val eventbusVersion = "1.0.3";
+    val eventbusVersion = "1.0.4";
     implementation("me.ahoo.eventbus:eventbus-spring-boot-starter:${eventbusVersion}")
     implementation("me.ahoo.eventbus:eventbus-spring-boot-autoconfigure:${eventbusVersion}") {
         capabilities {
@@ -141,7 +141,7 @@ values ('eventbus_subscribe_leader', 0, 0, 0, '', 0);
     <modelVersion>4.0.0</modelVersion>
     <artifactId>demo</artifactId>
     <properties>
-        <eventbus.version>1.0.3</eventbus.version>
+        <eventbus.version>1.0.4</eventbus.version>
     </properties>
 
     <dependencies>
@@ -169,33 +169,87 @@ values ('eventbus_subscribe_leader', 0, 0, 0, '', 0);
 ```yaml
 spring:
   application:
-  name: eventbus-demo
-  datasource:
-    url: jdbc:mysql://localhost:3306/eventbus_db?serverTimezone=GMT%2B8&characterEncoding=utf-8
-    username: root
-    password: root
+    name: eventbus-demo
   rabbitmq:
     host: localhost
     username: eventbus
     password: eventbus
 
+  shardingsphere:
+    datasource:
+      names: ds0
+      ds0:
+        type: com.zaxxer.hikari.HikariDataSource
+        jdbcUrl: jdbc:mariadb://localhost:3306/eventbus_db?serverTimezone=GMT%2B8&characterEncoding=utf-8
+        username: root
+        password: root
+    props:
+      sql-show: true
+    rules:
+      sharding:
+        tables:
+          publish_event:
+            actual-data-nodes: ds0.publish_event_$->{202110..202112},ds0.publish_event_$->{202201..202212}
+            table-strategy:
+              standard:
+                sharding-column: create_time
+                sharding-algorithm-name: publish-event-interval
+          subscribe_event:
+            actual-data-nodes: ds0.subscribe_event_$->{202110..202112},ds0.subscribe_event_$->{202201..202212}
+            table-strategy:
+              standard:
+                sharding-column: event_create_time
+                sharding-algorithm-name: subscribe-event-interval
+        sharding-algorithms:
+          publish-event-interval:
+            type: COSID_INTERVAL
+            props:
+              logic-name-prefix: publish_event_
+              datetime-lower: 2021-10-01 00:00:00
+              datetime-upper: 2022-12-31 23:59:59
+              sharding-suffix-pattern: yyyyMM
+              datetime-interval-unit: MONTHS
+              datetime-interval-amount: 1
+          subscribe-event-interval:
+            type: COSID_INTERVAL
+            props:
+              logic-name-prefix: subscribe_event_
+              datetime-lower: 2021-10-01 00:00:00
+              datetime-upper: 2022-12-31 23:59:59
+              sharding-suffix-pattern: yyyyMM
+              datetime-interval-unit: MONTHS
+              datetime-interval-amount: 1
 govern:
   eventbus:
     rabbit:
       exchange: eventbus
     compensate:
-      db:
-        publish:
-          schedule:
-            initial-delay: 30
-            period: 10
-        subscribe:
-          schedule:
-            initial-delay: 30
-            period: 10
-        enabled: true
+      publish:
+        schedule:
+          initial-delay: 30s
+          period: 10s
+        range: 60D
+      subscribe:
+        schedule:
+          initial-delay: 30s
+          period: 10s
+      enabled: true
     subscriber:
       prefix: ${spring.application.name}.
+
+cosid:
+  namespace: ${spring.application.name}
+  segment:
+    enabled: true
+    mode: chain
+    chain:
+      safe-distance: 1
+    distributor:
+      jdbc:
+        enable-auto-init-id-segment: true
+    provider:
+      eventbus:
+        step: 100
 ```
 
 ## Get Started

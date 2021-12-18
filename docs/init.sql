@@ -38,6 +38,9 @@ create
     index idx_status
     on publish_event (status);
 
+create index idx_create_time
+    on publish_event (create_time);
+
 create table publish_event_compensate
 (
     id               bigint unsigned auto_increment
@@ -78,6 +81,10 @@ create table subscribe_event
 create
     index idx_status
     on subscribe_event (status);
+
+create
+    index idx_event_create_time
+    on subscribe_event (event_create_time);
 
 create table subscribe_event_compensate
 (

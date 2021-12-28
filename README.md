@@ -27,6 +27,22 @@ create table simba_mutex
     version       int unsigned    not null
 );
 
+create table if not exists cosid_machine
+(
+    name            varchar(100) not null comment '{namespace}.{machine_id}',
+    namespace       varchar(100) not null,
+    machine_id      integer      not null default 0,
+    last_timestamp  bigint       not null default 0,
+    instance_id     varchar(100) not null default '',
+    distribute_time bigint       not null default 0,
+    revert_time     bigint       not null default 0,
+    constraint cosid_machine_pk
+        primary key (name)
+) engine = InnoDB;
+
+create index if not exists idx_namespace on cosid_machine (namespace);
+create index if not exists idx_instance_id on cosid_machine (instance_id);
+
 create table publish_event
 (
     id             bigint unsigned auto_increment

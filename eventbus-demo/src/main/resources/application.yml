@@ -90,14 +90,12 @@ govern:
 
 cosid:
   namespace: ${spring.application.name}
-  segment:
+  snowflake:
     enabled: true
-    mode: chain
-    chain:
-      safe-distance: 1
-    distributor:
-      jdbc:
-        enable-auto-init-id-segment: true
+    machine:
+      distributor:
+        type: jdbc
     provider:
       eventbus:
-        step: 100
+        converter:
+          type: radix

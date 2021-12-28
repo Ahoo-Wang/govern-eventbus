@@ -93,6 +93,7 @@ public class PublishCompensateScheduler extends AbstractCompensateScheduler {
             publishIdentity.setEventName(failedEvent.getEventName());
             publishIdentity.setStatus(failedEvent.getStatus());
             publishIdentity.setVersion(failedEvent.getVersion());
+            publishIdentity.setCreateTime(failedEvent.getCreateTime());
 
             CompensatePublishEvent compensatePublishEvent = new CompensatePublishEvent();
             compensatePublishEvent.setId(failedEvent.getId());

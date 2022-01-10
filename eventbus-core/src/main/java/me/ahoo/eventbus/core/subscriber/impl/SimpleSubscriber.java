@@ -13,9 +13,9 @@
 
 package me.ahoo.eventbus.core.subscriber.impl;
 
+import me.ahoo.eventbus.core.EventBusException;
 import me.ahoo.eventbus.core.publisher.PublishEvent;
 import me.ahoo.eventbus.core.subscriber.Subscriber;
-import me.ahoo.simba.SimbaException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -50,9 +50,9 @@ public class SimpleSubscriber implements Subscriber {
         try {
             return this.method.invoke(this.target, publishEvent.getEventData());
         } catch (IllegalAccessException illegalAccessException) {
-            throw new SimbaException(illegalAccessException.getMessage(), illegalAccessException);
+            throw new EventBusException(illegalAccessException.getMessage(), illegalAccessException);
         } catch (InvocationTargetException invocationTargetException) {
-            throw new SimbaException(invocationTargetException.getTargetException());
+            throw new EventBusException(invocationTargetException.getTargetException());
         }
     }
 

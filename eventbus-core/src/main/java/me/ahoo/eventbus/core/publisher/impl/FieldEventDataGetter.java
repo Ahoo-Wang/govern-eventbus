@@ -13,8 +13,8 @@
 
 package me.ahoo.eventbus.core.publisher.impl;
 
+import me.ahoo.eventbus.core.EventBusException;
 import me.ahoo.eventbus.core.publisher.EventDataGetter;
-import me.ahoo.simba.SimbaException;
 
 import java.lang.reflect.Field;
 
@@ -34,7 +34,7 @@ public class FieldEventDataGetter implements EventDataGetter {
         try {
             return eventDataField.get(targetObject);
         } catch (IllegalAccessException e) {
-            throw new SimbaException(e.getMessage(), e);
+            throw new EventBusException(e.getMessage(), e);
         }
     }
 }

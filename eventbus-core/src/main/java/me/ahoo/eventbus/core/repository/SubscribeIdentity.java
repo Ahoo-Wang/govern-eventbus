@@ -14,6 +14,8 @@
 package me.ahoo.eventbus.core.repository;
 
 /**
+ * SubscribeIdentity.
+ *
  * @author ahoo wang
  */
 public class SubscribeIdentity implements Version, Identity {
@@ -23,50 +25,51 @@ public class SubscribeIdentity implements Version, Identity {
     private Integer taken;
     private Integer version;
     private Long eventCreateTime;
+    
     public Long getId() {
         return id;
     }
-
+    
     public void setId(Long id) {
         this.id = id;
     }
-
+    
     public String getSubscriberName() {
         return subscriberName;
     }
-
+    
     public void setSubscriberName(String subscriberName) {
         this.subscriberName = subscriberName;
     }
-
+    
     public SubscribeStatus getStatus() {
         return status;
     }
-
+    
     public void setStatus(SubscribeStatus status) {
         this.status = status;
     }
-
+    
     public Integer getTaken() {
         return taken;
     }
-
+    
     public void setTaken(Integer taken) {
         this.taken = taken;
     }
-
+    
     public Integer getVersion() {
         return version;
     }
-
+    
     public void setVersion(Integer version) {
         this.version = version;
     }
-
+    
     public Long getEventCreateTime() {
         return eventCreateTime;
     }
-
+    
     public void setEventCreateTime(Long eventCreateTime) {
         this.eventCreateTime = eventCreateTime;
     }

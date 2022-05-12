@@ -14,10 +14,12 @@
 package me.ahoo.eventbus.core.repository;
 
 /**
+ * Identity.
+ *
  * @author ahoo wang
  */
 public interface Identity {
     Long getId();
-
+    
     void setId(Long id);
 }

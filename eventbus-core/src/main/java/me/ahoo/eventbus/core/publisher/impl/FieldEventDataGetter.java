@@ -19,16 +19,18 @@ import me.ahoo.simba.SimbaException;
 import java.lang.reflect.Field;
 
 /**
+ * FieldEventDataGetter.
+ *
  * @author ahoo wang
  */
 public class FieldEventDataGetter implements EventDataGetter {
     private final Field eventDataField;
-
+    
     public FieldEventDataGetter(Field eventDataField) {
         this.eventDataField = eventDataField;
         eventDataField.setAccessible(true);
     }
-
+    
     @Override
     public Object getEventData(Object targetObject) {
         try {

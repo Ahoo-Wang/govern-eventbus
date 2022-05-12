@@ -12,10 +12,12 @@
  */
 
 plugins {
-    id("io.github.gradle-nexus.publish-plugin") version ("1.1.0")
+    id("io.github.gradle-nexus.publish-plugin")
+    java
+    jacoco
 }
 
-val bomProjects = listOf(
+val bomProjects = setOf(
     project(":eventbus-bom"),
     project(":eventbus-dependencies")
 )
@@ -31,9 +33,9 @@ ext {
     set("jmhVersion", "1.29")
     set("guavaVersion", "30.0-jre")
     set("springfoxVersion", "3.0.0")
-    set("cosIdVersion", "1.6.6")
-    set("simbaVersion", "0.2.6")
-    set("shardingsphereVersion","5.0.0")
+    set("cosIdVersion", "1.10.0")
+    set("simbaVersion", "0.3.6")
+    set("shardingsphereVersion", "5.0.0")
     set("libraryProjects", libraryProjects)
 }
 
@@ -53,6 +55,15 @@ configure(bomProjects) {
 
 
 configure(libraryProjects) {
+    apply<CheckstylePlugin>()
+    configure<CheckstyleExtension> {
+        toolVersion = "9.2.1"
+    }
+    apply<com.github.spotbugs.snom.SpotBugsPlugin>()
+    configure<com.github.spotbugs.snom.SpotBugsExtension> {
+        excludeFilter.set(file("${rootDir}/config/spotbugs/exclude.xml"))
+    }
+    apply<JacocoPlugin>()
     apply<JavaLibraryPlugin>()
     configure<JavaPluginExtension> {
         toolchain {
@@ -97,8 +108,8 @@ configure(publishProjects) {
                 name = "GitHubPackages"
                 url = uri("https://maven.pkg.github.com/Ahoo-Wang/govern-eventbus")
                 credentials {
-                    username = project.findProperty("gitHubPackagesUserName") as String
-                    password = project.findProperty("gitHubPackagesToken") as String
+                    username = System.getenv("GITHUB_ACTOR")
+                    password = System.getenv("GITHUB_TOKEN")
                 }
             }
         }
@@ -140,6 +151,13 @@ configure(publishProjects) {
         }
     }
     configure<SigningExtension> {
+        val isInCI = null != System.getenv("CI");
+        if (isInCI) {
+            val signingKeyId = System.getenv("SIGNING_KEYID")
+            val signingKey = System.getenv("SIGNING_SECRETKEY")
+            val signingPassword = System.getenv("SIGNING_PASSWORD")
+            useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+        }
         if (isBom) {
             sign(extensions.getByType(PublishingExtension::class).publications.get("mavenBom"))
         } else {
@@ -150,8 +168,25 @@ configure(publishProjects) {
 
 nexusPublishing {
     repositories {
-        sonatype()
+        sonatype {
+            username.set(System.getenv("MAVEN_USERNAME"))
+            password.set(System.getenv("MAVEN_PASSWORD"))
+        }
     }
 }
 
 fun getPropertyOf(name: String) = project.properties[name]?.toString()
+
+tasks.register<JacocoReport>("codeCoverageReport") {
+    executionData(fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec"))
+    libraryProjects.forEach {
+        sourceSets(it.sourceSets.main.get())
+    }
+    reports {
+        xml.required.set(true)
+        html.outputLocation.set(file("${buildDir}/reports/jacoco/report.xml"))
+        csv.required.set(false)
+        html.required.set(true)
+        html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/"))
+    }
+}

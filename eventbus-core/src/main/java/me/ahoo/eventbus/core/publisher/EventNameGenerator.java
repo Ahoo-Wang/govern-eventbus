@@ -18,10 +18,12 @@ import me.ahoo.eventbus.core.annotation.Event;
 import javax.annotation.Nullable;
 
 /**
+ * EventNameGenerator.
+ *
  * @author ahoo wang
  */
 public interface EventNameGenerator {
-
+    
     String generate(@Nullable Event eventAnnotation, Class<?> eventClass);
-
+    
 }

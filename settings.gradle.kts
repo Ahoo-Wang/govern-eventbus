@@ -22,3 +22,14 @@ include(":eventbus-core")
 include(":eventbus-jdbc")
 include(":eventbus-bom")
 include(":eventbus-dependencies")
+
+buildscript {
+    repositories {
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath("me.champeau.jmh:jmh-gradle-plugin:0.6.6")
+        classpath("io.github.gradle-nexus:publish-plugin:1.1.0")
+        classpath("com.github.spotbugs.snom:spotbugs-gradle-plugin:5.0.6")
+    }
+}

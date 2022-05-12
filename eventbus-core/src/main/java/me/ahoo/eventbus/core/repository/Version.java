@@ -14,7 +14,7 @@
 package me.ahoo.eventbus.core.repository;
 
 /**
- * 版本号
+ * 版本号.
  *
  * @author ahoo wang
  */

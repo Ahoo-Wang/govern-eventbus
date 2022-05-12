@@ -14,12 +14,14 @@
 package me.ahoo.eventbus.core.publisher;
 
 /**
+ * EventMetadata.
+ *
  * @author ahoo wang
  */
 public interface EventMetadata {
-
+    
     String getEventName();
-
+    
     Class<?> getEventClass();
-
+    
 }

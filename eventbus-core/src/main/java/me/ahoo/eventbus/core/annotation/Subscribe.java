@@ -13,9 +13,15 @@
 
 package me.ahoo.eventbus.core.annotation;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
+ * Subscribe.
+ *
  * @author : ahoo wang
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -23,14 +29,15 @@ import java.lang.annotation.*;
 @Target(ElementType.METHOD)
 public @interface Subscribe {
     /**
-     * subscribe name
-     * <p>
+     * subscribe name.
+     * <pre>
      * kafka:consumerId
      * rabbit:queueName
+     * </pre>
      *
      * @return queue name
      */
     String value() default "";
-
+    
     boolean rePublish() default false;
 }

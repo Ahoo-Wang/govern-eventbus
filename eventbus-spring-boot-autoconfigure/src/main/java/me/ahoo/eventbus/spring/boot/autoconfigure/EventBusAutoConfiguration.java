@@ -13,13 +13,6 @@
 
 package me.ahoo.eventbus.spring.boot.autoconfigure;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import me.ahoo.eventbus.core.consistency.ConsistencyPublisher;
 import me.ahoo.eventbus.core.consistency.ConsistencySubscriberFactory;
 import me.ahoo.eventbus.core.consistency.impl.ConsistencyPublisherImpl;
@@ -41,6 +34,14 @@ import me.ahoo.eventbus.jdbc.JdbcPublishEventRepository;
 import me.ahoo.eventbus.jdbc.JdbcSubscribeEventRepository;
 import me.ahoo.eventbus.spring.support.PublishAnnotationAspect;
 import me.ahoo.eventbus.spring.support.SubscriberLifecycle;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
@@ -54,99 +55,101 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
+ * EventBusAutoConfiguration.
+ *
  * @author : ahoo wang
  */
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties({EventBusProperties.class})
 public class EventBusAutoConfiguration {
-
+    
     private final EventBusProperties eventBusProperties;
-
+    
     public EventBusAutoConfiguration(EventBusProperties eventBusProperties) {
         this.eventBusProperties = eventBusProperties;
     }
-
+    
     @Bean
     @ConditionalOnMissingBean
     public EventNameGenerator eventNameGenerator() {
         return new SimpleEventNameGenerator();
     }
-
+    
     @Bean
     @ConditionalOnMissingBean
     public SubscriberNameGenerator subscriberNameGenerator() {
         return new SimpleSubscriberNameGenerator(eventBusProperties.getSubscriber().getPrefix());
     }
-
+    
     @Bean
     @ConditionalOnMissingBean
     public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         JavaTimeModule timeModule = new JavaTimeModule();
-
+        
         timeModule.addSerializer(LocalDate.class,
-                new LocalDateSerializer(DateTimeFormatter.ISO_DATE));
+            new LocalDateSerializer(DateTimeFormatter.ISO_DATE));
         timeModule.addDeserializer(LocalDate.class,
-                new LocalDateDeserializer(DateTimeFormatter.ISO_DATE));
-
+            new LocalDateDeserializer(DateTimeFormatter.ISO_DATE));
+        
         timeModule.addSerializer(LocalDateTime.class,
-                new LocalDateTimeSerializer(DateTimeFormatter.ISO_DATE_TIME));
+            new LocalDateTimeSerializer(DateTimeFormatter.ISO_DATE_TIME));
         timeModule.addDeserializer(LocalDateTime.class,
-                new LocalDateTimeDeserializer(DateTimeFormatter.ISO_DATE_TIME));
-
+            new LocalDateTimeDeserializer(DateTimeFormatter.ISO_DATE_TIME));
+        
         objectMapper.registerModule(timeModule);
         return objectMapper;
     }
-
+    
     @Bean
     @ConditionalOnMissingBean
     public Serializer serializer(ObjectMapper objectMapper) {
         return new JsonSerializer(objectMapper);
     }
-
+    
     @Bean
     @ConditionalOnMissingBean
     public Deserializer deserializer(ObjectMapper objectMapper) {
         return new JsonDeserializer(objectMapper);
     }
-
+    
     @Bean
     @ConditionalOnMissingBean
     public EventDescriptorParser eventDescriptorParser(EventNameGenerator eventNameGenerator) {
         return new EventDescriptorParser(eventNameGenerator);
     }
-
+    
     @Bean
     @ConditionalOnMissingBean
     public SubscriberScanner subscriberScanner(SubscriberNameGenerator subscriberNameGenerator, EventDescriptorParser eventDescriptorParser) {
         return new SubscriberScanner(subscriberNameGenerator, eventDescriptorParser);
     }
-
+    
     @Bean
     @ConditionalOnMissingBean
     public PublishEventRepository publishEventRepository(Serializer serializer, NamedParameterJdbcTemplate jdbcTemplate) {
         return new JdbcPublishEventRepository(serializer, jdbcTemplate);
     }
-
+    
     @Bean
     @ConditionalOnMissingBean
     public PublishAnnotationAspect publishAnnotationAspect(ConsistencyPublisher consistencyPublisher) {
         return new PublishAnnotationAspect(consistencyPublisher);
     }
-
+    
     @Bean
     @ConditionalOnMissingBean
     public SubscriberLifecycle subscribeAnnotationBeanPostProcessor(ApplicationContext applicationContext) {
         return new SubscriberLifecycle(applicationContext);
     }
-
+    
     @Bean
     @ConditionalOnMissingBean
     public SubscribeEventRepository subscribeEventRepository(Serializer serializer, NamedParameterJdbcTemplate jdbcTemplate) {
         return new JdbcSubscribeEventRepository(serializer, jdbcTemplate);
     }
-
+    
     @Bean
     @ConditionalOnMissingBean
     public ConsistencyPublisher consistencyPublisher(Publisher publisher,
@@ -155,7 +158,7 @@ public class EventBusAutoConfiguration {
                                                      EventDescriptorParser eventDescriptorParser) {
         return new ConsistencyPublisherImpl(publisher, publishEventRepository, transactionManager, eventDescriptorParser);
     }
-
+    
     @Bean
     @ConditionalOnMissingBean
     public ConsistencySubscriberFactory consistencySubscriberFactory(ConsistencyPublisher consistencyPublisher,

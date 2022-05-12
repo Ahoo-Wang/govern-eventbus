@@ -18,9 +18,6 @@ import lombok.var;
 
 import java.util.concurrent.ThreadFactory;
 
-/**
- * @author ahoo wang
- */
 public class Threads {
     public static ThreadFactory defaultFactory(String domain) {
         var nameFormat = domain + "-%d";

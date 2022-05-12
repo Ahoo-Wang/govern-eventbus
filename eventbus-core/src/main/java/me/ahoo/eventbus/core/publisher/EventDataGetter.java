@@ -14,6 +14,8 @@
 package me.ahoo.eventbus.core.publisher;
 
 /**
+ * EventDataGetter.
+ *
  * @author ahoo wang
  */
 public interface EventDataGetter {

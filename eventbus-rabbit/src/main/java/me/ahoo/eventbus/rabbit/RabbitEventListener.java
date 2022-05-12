@@ -13,26 +13,29 @@
 
 package me.ahoo.eventbus.rabbit;
 
-import com.google.common.base.Charsets;
-import lombok.extern.slf4j.Slf4j;
 import me.ahoo.eventbus.core.publisher.PublishEvent;
 import me.ahoo.eventbus.core.subscriber.Subscriber;
+
+import com.google.common.base.Charsets;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageListener;
 
 /**
+ * RabbitEventListener.
+ *
  * @author ahoo wang
  */
 @Slf4j
 public class RabbitEventListener implements MessageListener {
     private final Subscriber subscriber;
     private final RabbitEventCodec rabbitEventCodec;
-
+    
     public RabbitEventListener(RabbitEventCodec rabbitEventCodec, Subscriber subscriber) {
         this.rabbitEventCodec = rabbitEventCodec;
         this.subscriber = subscriber;
     }
-
+    
     @Override
     public void onMessage(Message message) {
         try {

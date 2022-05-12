@@ -19,7 +19,8 @@ import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 /**
- * execution flow
+ * execution flow.
+ * <pre>
  * 1. begin local transaction
  * 2. invoke local biz code
  * 3. insert publish event:INITIALIZED to local db
@@ -28,17 +29,18 @@ import java.util.function.Supplier;
  * 5. publish event to event-bus(MQ)
  * 6. update publish event status to SUCCEEDED
  * --- catch update publish event to FAILED
+ * </pre>
  *
  * @author ahoo wang
  */
 public interface ConsistencyPublisher {
-
+    
     Object publish(Supplier<Object> publishDataSupplier);
-
+    
     /**
-     * publish event to bus
+     * publish event to bus.
      *
-     * @param publishIdentity  publish event id
+     * @param publishIdentity publish event id
      * @param publishEventData publish event data
      * @return the Future of publish
      */

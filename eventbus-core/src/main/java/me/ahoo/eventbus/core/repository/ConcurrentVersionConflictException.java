@@ -16,7 +16,7 @@ package me.ahoo.eventbus.core.repository;
 import me.ahoo.eventbus.core.EventBusException;
 
 /**
- * 并发版本冲突
+ * 并发版本冲突异常.
  *
  * @author ahoo wang
  */

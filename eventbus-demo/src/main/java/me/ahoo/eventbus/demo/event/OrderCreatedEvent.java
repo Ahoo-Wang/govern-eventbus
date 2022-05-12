@@ -15,25 +15,29 @@ package me.ahoo.eventbus.demo.event;
 
 import me.ahoo.eventbus.core.annotation.Event;
 
+import com.google.common.base.MoreObjects;
+
 /**
+ * OrderCreatedEvent.
+ *
  * @author ahoo wang
  */
 @Event(dataId = "orderId")
 public class OrderCreatedEvent {
     private long orderId;
-
+    
     public long getOrderId() {
         return orderId;
     }
-
+    
     public void setOrderId(long orderId) {
         this.orderId = orderId;
     }
-
+    
     @Override
     public String toString() {
-        return "OrderCreatedEvent{" +
-                "orderId=" + orderId +
-                '}';
+        return MoreObjects.toStringHelper(this)
+            .add("orderId", orderId)
+            .toString();
     }
 }

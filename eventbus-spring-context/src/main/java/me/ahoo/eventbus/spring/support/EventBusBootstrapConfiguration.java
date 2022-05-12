@@ -19,21 +19,23 @@ import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
 
 /**
+ * EventBusBootstrapConfiguration.
+ *
  * @author : ahoo wang
  */
 public class EventBusBootstrapConfiguration implements ImportBeanDefinitionRegistrar {
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-
+        
         if (!registry.containsBeanDefinition(PublishAnnotationAspect.BEAN_NAME)) {
             registry.registerBeanDefinition(PublishAnnotationAspect.BEAN_NAME,
-                    new RootBeanDefinition(PublishAnnotationAspect.class));
+                new RootBeanDefinition(PublishAnnotationAspect.class));
         }
-
+        
         if (!registry.containsBeanDefinition(SubscriberLifecycle.BEAN_NAME)) {
             registry.registerBeanDefinition(SubscriberLifecycle.BEAN_NAME,
-                    new RootBeanDefinition(SubscriberLifecycle.class));
+                new RootBeanDefinition(SubscriberLifecycle.class));
         }
-
+        
     }
 }

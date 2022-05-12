@@ -21,6 +21,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
+ * SimpleSubscriber.
+ *
  * @author ahoo wang
  */
 public class SimpleSubscriber implements Subscriber {
@@ -30,7 +32,7 @@ public class SimpleSubscriber implements Subscriber {
     private final String subscribeEventName;
     private final Class<?> subscribeEventClass;
     private final boolean rePublish;
-
+    
     public SimpleSubscriber(String name,
                             Object target,
                             Method method,
@@ -44,7 +46,7 @@ public class SimpleSubscriber implements Subscriber {
         this.subscribeEventClass = subscribeEventClass;
         this.rePublish = rePublish;
     }
-
+    
     @Override
     public Object invoke(PublishEvent publishEvent) {
         try {
@@ -55,27 +57,27 @@ public class SimpleSubscriber implements Subscriber {
             throw new SimbaException(invocationTargetException.getTargetException());
         }
     }
-
+    
     public String getName() {
         return name;
     }
-
+    
     public Object getTarget() {
         return target;
     }
-
+    
     public Method getMethod() {
         return method;
     }
-
+    
     public String getSubscribeEventName() {
         return subscribeEventName;
     }
-
+    
     public Class<?> getSubscribeEventClass() {
         return subscribeEventClass;
     }
-
+    
     public boolean rePublish() {
         return rePublish;
     }

@@ -13,14 +13,15 @@
 
 package me.ahoo.eventbus.core.subscriber;
 
-
 import java.lang.reflect.Method;
 
 /**
+ * SubscriberNameGenerator.
+ *
  * @author ahoo wang
  */
 public interface SubscriberNameGenerator {
-
+    
     String generate(Method subscriberMethod);
-
+    
 }

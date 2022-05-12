@@ -14,17 +14,19 @@
 package me.ahoo.eventbus.core.publisher;
 
 /**
+ * EventDataIdGetter.
+ *
  * @author ahoo wang
  */
 public interface EventDataIdGetter {
     String DEFAULT_ID_FIELD_NAME = "id";
     long DEFAULT_EVENT_DATA_ID = 0;
-
+    
     default long getEventDataId(Object targetObject) {
         return DEFAULT_EVENT_DATA_ID;
     }
-
+    
     static boolean availableType(Class<?> idType) {
-        return  Long.class.equals(idType) || Long.TYPE.equals(idType);
+        return Long.class.equals(idType) || Long.TYPE.equals(idType);
     }
 }

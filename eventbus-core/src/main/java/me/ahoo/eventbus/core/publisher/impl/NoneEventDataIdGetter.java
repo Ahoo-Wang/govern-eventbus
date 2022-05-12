@@ -16,9 +16,11 @@ package me.ahoo.eventbus.core.publisher.impl;
 import me.ahoo.eventbus.core.publisher.EventDataIdGetter;
 
 /**
+ * NoneEventDataIdGetter.
+ *
  * @author ahoo wang
  */
 public class NoneEventDataIdGetter implements EventDataIdGetter {
     public static final EventDataIdGetter INSTANCE = new NoneEventDataIdGetter();
-
+    
 }

@@ -20,20 +20,23 @@ import me.ahoo.eventbus.core.publisher.EventDescriptorParser;
 import me.ahoo.eventbus.core.repository.PublishEventRepository;
 import me.ahoo.eventbus.core.repository.SubscribeEventRepository;
 import me.ahoo.eventbus.core.subscriber.Subscriber;
+
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
+ * ConsistencySubscriberFactoryImpl.
+ *
  * @author ahoo wang
  */
 public class ConsistencySubscriberFactoryImpl implements ConsistencySubscriberFactory {
-
+    
     private final ConsistencyPublisher consistencyPublisher;
-
+    
     private final PublishEventRepository publishEventRepository;
     private final SubscribeEventRepository subscribeEventRepository;
     private final PlatformTransactionManager transactionManager;
     private final EventDescriptorParser eventDescriptorParser;
-
+    
     public ConsistencySubscriberFactoryImpl(ConsistencyPublisher consistencyPublisher,
                                             PublishEventRepository publishEventRepository,
                                             SubscribeEventRepository subscribeEventRepository,
@@ -41,11 +44,11 @@ public class ConsistencySubscriberFactoryImpl implements ConsistencySubscriberFa
         this.consistencyPublisher = consistencyPublisher;
         this.publishEventRepository = publishEventRepository;
         this.subscribeEventRepository = subscribeEventRepository;
-
+        
         this.transactionManager = transactionManager;
         this.eventDescriptorParser = eventDescriptorParser;
     }
-
+    
     @Override
     public ConsistencySubscriber create(Subscriber subscriber) {
         return new ConsistencySubscriberImpl(subscriber, consistencyPublisher, publishEventRepository, subscribeEventRepository, transactionManager, eventDescriptorParser);

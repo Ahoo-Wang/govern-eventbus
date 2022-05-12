@@ -17,8 +17,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
+ * DemoApplication.
+ *
  * @author ahoo wang
- * createTime 2020/2/17 20:08
  */
 @SpringBootApplication
 public class DemoApplication {

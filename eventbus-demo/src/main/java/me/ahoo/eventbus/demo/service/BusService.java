@@ -13,9 +13,7 @@
 
 package me.ahoo.eventbus.demo.service;
 
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import lombok.var;
+
 import me.ahoo.cosid.IdGenerator;
 import me.ahoo.cosid.snowflake.SafeJavaScriptSnowflakeId;
 import me.ahoo.eventbus.core.annotation.Publish;
@@ -24,71 +22,73 @@ import me.ahoo.eventbus.demo.event.FieldEventData;
 import me.ahoo.eventbus.demo.event.FieldEventWrapper;
 import me.ahoo.eventbus.demo.event.PublishDataEvent;
 import me.ahoo.eventbus.demo.event.RePublishDataEvent;
+
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import lombok.var;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
 /**
+ * BusService.
+ *
  * @author ahoo wang
- * createTime 2020/2/17 20:10
  */
 @Slf4j
 @Service
 public class BusService {
-
+    
     @Autowired
     private BusService proxyBusService;
     private final IdGenerator idGenerator;
-
+    
     public BusService() {
         idGenerator = SafeJavaScriptSnowflakeId.ofMillisecond(0);
     }
-
+    
     /**
      * publish use proxy.
      *
-     * @return
      */
     public PublishDataEvent nestedPublishWithProxy() {
         return proxyBusService.publish();
     }
-
+    
     /**
      * can not publish this.
      *
-     * @return
      */
     public PublishDataEvent nestedPublish() {
         log.info("here will can not publish event use event bus.");
         return this.publish();
     }
-
-
+    
     @Publish
     public PublishDataEvent publish() {
         log.info("publish");
         var event = new PublishDataEvent();
-
+        
         event.setId(idGenerator.generate());
         return event;
     }
-
+    
     @SneakyThrows
     @Subscribe
     public void subscribePublishDataEvent(PublishDataEvent publishDataEvent) {
-        int SLEEP_SECONDS = 5;
-        log.info("subscribePublishDataEvent->>id:{} sleep:[{}]", publishDataEvent.getId(), SLEEP_SECONDS);
-        TimeUnit.SECONDS.sleep(SLEEP_SECONDS);
-
+        int sleepSeconds = 5;
+        log.info("subscribePublishDataEvent->>id:{} sleep:[{}]", publishDataEvent.getId(), sleepSeconds);
+        TimeUnit.SECONDS.sleep(sleepSeconds);
+        
     }
-
+    
     @Subscribe
     public PublishDataEvent subscribeThenPublishNull(PublishDataEvent publishDataEvent) {
         log.info("subscribeThenPublishNull->>id:{}", publishDataEvent.getId());
         return null;
     }
-
+    
     @Subscribe("subscribeThenPublish.customizeQueue")
     public RePublishDataEvent subscribeThenPublish(PublishDataEvent publishDataEvent) {
         log.info("rePublish->>id:{}", publishDataEvent.getId());
@@ -96,18 +96,18 @@ public class BusService {
         event.setId(idGenerator.generate());
         return event;
     }
-
+    
     @Subscribe
     public void subscribePublishDataEventOther(PublishDataEvent publishDataEvent) {
         log.info("subscribePublishDataEventOther->>id:{}", publishDataEvent.getId());
     }
-
+    
     @Subscribe
     public void subscribeError(RePublishDataEvent rePublishDataEvent) {
         log.info("subscribeError->>error:{}", rePublishDataEvent.getId());
         throw new RuntimeException("we are error");
     }
-
+    
     @Publish
     public FieldEventWrapper fieldEventPublish() {
         log.info("fieldEventPublish");
@@ -118,7 +118,7 @@ public class BusService {
         fieldEventWrapper.setFieldEventData(fieldEventData);
         return fieldEventWrapper;
     }
-
+    
     @Subscribe
     public void subscribeFieldEvent(FieldEventData fieldEventData) {
         log.info("subscribeFieldEvent");

@@ -13,30 +13,32 @@
 
 package me.ahoo.eventbus.core.subscriber.impl;
 
-import com.google.common.base.Strings;
-import lombok.extern.slf4j.Slf4j;
-import lombok.var;
 import me.ahoo.eventbus.core.annotation.Subscribe;
 import me.ahoo.eventbus.core.subscriber.SubscriberNameGenerator;
+
+import com.google.common.base.Strings;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
 
 /**
+ * SimpleSubscriberNameGenerator.
+ *
  * @author ahoo wang
  */
 @Slf4j
 public class SimpleSubscriberNameGenerator implements SubscriberNameGenerator {
-
+    
     private final String prefix;
-
+    
     public SimpleSubscriberNameGenerator(String prefix) {
         this.prefix = prefix;
     }
-
+    
     @Override
     public String generate(Method subscriberMethod) {
-        var subscribeAnnotation = subscriberMethod.getAnnotation(Subscribe.class);
-        var subscribeName = subscribeAnnotation.value();
+        Subscribe subscribeAnnotation = subscriberMethod.getAnnotation(Subscribe.class);
+        String subscribeName = subscribeAnnotation.value();
         if (Strings.isNullOrEmpty(subscribeName)) {
             subscribeName = subscriberMethod.getName();
             if (log.isWarnEnabled()) {

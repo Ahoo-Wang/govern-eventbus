@@ -13,9 +13,14 @@
 
 package me.ahoo.eventbus.core.publisher;
 
-import lombok.extern.slf4j.Slf4j;
 import me.ahoo.eventbus.core.annotation.Event;
-import me.ahoo.eventbus.core.publisher.impl.*;
+import me.ahoo.eventbus.core.publisher.impl.FieldEventDataGetter;
+import me.ahoo.eventbus.core.publisher.impl.FieldEventDataIdGetter;
+import me.ahoo.eventbus.core.publisher.impl.NoneEventDataIdGetter;
+import me.ahoo.eventbus.core.publisher.impl.SimpleEventDataGetter;
+import me.ahoo.eventbus.core.publisher.impl.SimpleEventDescriptor;
+
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
@@ -25,30 +30,32 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 /**
+ * EventDescriptorParser.
+ *
  * @author ahoo wang
  */
 @Slf4j
 public class EventDescriptorParser {
-
+    
     private final ConcurrentHashMap<Class<?>, EventDescriptor> eventDescriptorMap = new ConcurrentHashMap<>();
     private final EventNameGenerator eventNameGenerator;
-
+    
     public EventDescriptorParser(EventNameGenerator eventNameGenerator) {
         this.eventNameGenerator = eventNameGenerator;
     }
-
+    
     public EventDescriptor get(final Object targetObject) {
         return get(targetObject.getClass());
     }
-
+    
     public EventDescriptor get(final Class<?> targetClass) {
-        return eventDescriptorMap.computeIfAbsent(targetClass, eClazz -> parse(targetClass));
+        return eventDescriptorMap.computeIfAbsent(targetClass, key -> parse(targetClass));
     }
-
+    
     public EventDescriptor parse(final Class<?> targetClass) {
-
+        
         Event eventClassAnnotation = targetClass.getAnnotation(Event.class);
-
+        
         if (Objects.nonNull(eventClassAnnotation)) {
             Class<?> eventClass = targetClass;
             EventDataIdGetter eventDataIdGetter = getEventDataIdGetter(eventClass, eventClassAnnotation.dataId());
@@ -59,7 +66,7 @@ public class EventDescriptorParser {
          * event data field
          */
         Optional<Field> eventFieldOp = filterField(targetClass, (declaredField) -> declaredField.isAnnotationPresent(Event.class));
-
+        
         if (eventFieldOp.isPresent()) {
             Field eventDataField = eventFieldOp.get();
             eventClassAnnotation = eventDataField.getAnnotation(Event.class);
@@ -68,27 +75,27 @@ public class EventDescriptorParser {
             String eventName = getEventName(eventClassAnnotation, eventClass);
             return new SimpleEventDescriptor(eventName, eventClass, new FieldEventDataGetter(eventDataField), eventDataIdGetter);
         }
-
+        
         String eventName = getEventName(null, targetClass);
         EventDataIdGetter eventDataIdGetter = getEventDataIdGetter(targetClass, EventDataIdGetter.DEFAULT_ID_FIELD_NAME);
         return new SimpleEventDescriptor(eventName, targetClass, new SimpleEventDataGetter(), eventDataIdGetter);
     }
-
+    
     private EventDataIdGetter getEventDataIdGetter(Class<?> eventClass, String dataIdFieldName) {
         Optional<Field> eventDataIdFieldOp = filterField(eventClass, (declaredField ->
-                EventDataIdGetter.availableType(declaredField.getType())
-                        && dataIdFieldName.equals(declaredField.getName())
+            EventDataIdGetter.availableType(declaredField.getType())
+                && dataIdFieldName.equals(declaredField.getName())
         ));
         if (eventDataIdFieldOp.isPresent()) {
             return new FieldEventDataIdGetter(eventDataIdFieldOp.get());
         }
         return NoneEventDataIdGetter.INSTANCE;
     }
-
+    
     private String getEventName(@Nullable Event eventAnnotation, Class<?> eventClass) {
         return eventNameGenerator.generate(eventAnnotation, eventClass);
     }
-
+    
     public static Optional<Field> filterField(Class<?> targetClass, Predicate<Field> filter) {
         Class<?> currentDeclaringClass = targetClass;
         while (!Object.class.equals(currentDeclaringClass)) {

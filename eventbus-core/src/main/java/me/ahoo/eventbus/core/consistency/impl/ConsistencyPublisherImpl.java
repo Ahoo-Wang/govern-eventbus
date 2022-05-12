@@ -13,8 +13,6 @@
 
 package me.ahoo.eventbus.core.consistency.impl;
 
-import com.google.common.base.Stopwatch;
-import lombok.extern.slf4j.Slf4j;
 import me.ahoo.eventbus.core.compensate.CompensatePublishEvent;
 import me.ahoo.eventbus.core.consistency.ConsistencyPublisher;
 import me.ahoo.eventbus.core.publisher.EventDescriptor;
@@ -24,14 +22,23 @@ import me.ahoo.eventbus.core.publisher.Publisher;
 import me.ahoo.eventbus.core.repository.PublishEventRepository;
 import me.ahoo.eventbus.core.repository.PublishIdentity;
 import me.ahoo.eventbus.core.utils.Threads;
+
+import com.google.common.base.Stopwatch;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 
 import java.util.Objects;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
+ * ConsistencyPublisherImpl.
+ *
  * @author ahoo wang
  */
 @Slf4j
@@ -40,26 +47,26 @@ public class ConsistencyPublisherImpl implements ConsistencyPublisher, AutoClose
     private static final int EXECUTOR_MAX_POOL_SIZE = Runtime.getRuntime().availableProcessors();
     private static final int EXECUTOR_BLOCKING_QUEUE_SIZE = 10000;
     private final Publisher publisher;
-
+    
     private final PublishEventRepository publishEventRepository;
     private final PlatformTransactionManager transactionManager;
     private final ExecutorService executorService;
     private final EventDescriptorParser eventDescriptorParser;
-
+    
     public ConsistencyPublisherImpl(Publisher publisher,
                                     PublishEventRepository publishEventRepository,
                                     PlatformTransactionManager transactionManager, EventDescriptorParser eventDescriptorParser) {
         this.eventDescriptorParser = eventDescriptorParser;
-
+        
         executorService = new ThreadPoolExecutor(EXECUTOR_CORE_POOL_SIZE, EXECUTOR_MAX_POOL_SIZE,
-                1, TimeUnit.MINUTES,
-                new ArrayBlockingQueue<>(EXECUTOR_BLOCKING_QUEUE_SIZE), Threads.defaultFactory("ConsistencyPublisher"));
-
+            1, TimeUnit.MINUTES,
+            new ArrayBlockingQueue<>(EXECUTOR_BLOCKING_QUEUE_SIZE), Threads.defaultFactory("ConsistencyPublisher"));
+        
         this.publisher = publisher;
         this.publishEventRepository = publishEventRepository;
         this.transactionManager = transactionManager;
     }
-
+    
     @Override
     public Object publish(Supplier<Object> publishDataSupplier) {
         Stopwatch stopwatch = Stopwatch.createStarted();
@@ -85,28 +92,28 @@ public class ConsistencyPublisherImpl implements ConsistencyPublisher, AutoClose
             }
             throw throwable;
         }
-
+        
         if (log.isInfoEnabled()) {
             log.info("publish - Inner succeeded,taken:[{}].", stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
-
+        
         if (Objects.isNull(publishIdentity)) {
             if (log.isInfoEnabled()) {
                 log.info("publish - Ignore publish event when publishEvent is null.");
             }
             return returnValue;
         }
-
+        
         publish(publishIdentity, publishEventData);
-
+        
         return returnValue;
     }
-
+    
     @Override
     public Future<?> publish(PublishIdentity publishIdentity, Object publishEventData) {
         return executorService.submit(() -> doPublish(publishIdentity, publishEventData));
     }
-
+    
     private void doPublish(PublishIdentity publishIdentity, Object publishEventData) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         try {
@@ -134,13 +141,14 @@ public class ConsistencyPublisherImpl implements ConsistencyPublisher, AutoClose
                 publishEventRepository.markFailed(publishIdentity, throwable);
             } catch (Throwable publishFailedEx) {
                 if (log.isErrorEnabled()) {
-                    String markFailedError = String.format("doPublish - mark publish event status to failed error. -> id:[%d] error,taken:[%d]!", publishIdentity.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+                    String markFailedError =
+                        String.format("doPublish - mark publish event status to failed error. -> id:[%d] error,taken:[%d]!", publishIdentity.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
                     log.error(markFailedError, publishFailedEx);
                 }
             }
             return;
         }
-
+        
         try {
             publishEventRepository.markSucceeded(publishIdentity);
             if (log.isDebugEnabled()) {
@@ -148,7 +156,8 @@ public class ConsistencyPublisherImpl implements ConsistencyPublisher, AutoClose
             }
         } catch (Throwable throwable) {
             if (log.isErrorEnabled()) {
-                String markSucceededError = String.format("doPublish - mark publish event to succeeded error. -> id:[%d] error,taken:[%d]!", publishIdentity.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+                String markSucceededError =
+                    String.format("doPublish - mark publish event to succeeded error. -> id:[%d] error,taken:[%d]!", publishIdentity.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
                 log.error(markSucceededError, throwable);
             }
             return;
@@ -157,7 +166,7 @@ public class ConsistencyPublisherImpl implements ConsistencyPublisher, AutoClose
             log.debug("doPublish - succeeded,taken:[{}]", stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
     }
-
+    
     @Override
     public void close() throws Exception {
         executorService.shutdown();

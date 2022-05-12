@@ -15,9 +15,15 @@ package me.ahoo.eventbus.core.annotation;
 
 import me.ahoo.eventbus.core.publisher.EventDataIdGetter;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
+ * Event.
+ *
  * @author ahoo wang
  */
 @Target({ElementType.TYPE, ElementType.FIELD})
@@ -25,17 +31,18 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Event {
     /**
-     * event name
-     * <p>
+     * event name.
+     * <pre>
      * kafka:topic
      * rabbit:routeKey
+     * </pre>
      *
      * @return event name
      */
     String value() default "";
-
+    
     /**
-     * event data id's field name
+     * event data id's field name.
      *
      * @return event data id's field name
      */

@@ -22,54 +22,47 @@ import java.time.Duration;
 import java.util.List;
 
 /**
- * 订阅事件仓储
+ * 订阅事件仓储.
  *
  * @author ahoo wang
  */
 public interface SubscribeEventRepository extends EventRepository {
-
+    
     /**
+     * initialize.
      * *  getSubscribeEventBy event_id and event_name and subscribe_name
      * *  if exist
      * *      status is SUCCEEDED throw error
      * *      status is INITIALIZED return
      * *  else insert subscribe event:INITIALIZED to local db
      *
-     * @param subscriber            Subscriber
+     * @param subscriber Subscriber
      * @param subscribePublishEvent PublishEventWrapper
      * @return SubscribeIdentity
      */
     SubscribeIdentity initialize(Subscriber subscriber, PublishEvent subscribePublishEvent) throws RepeatedSubscribeException;
-
-
+    
+    
     /**
-     * subscribeEventId and version
+     * subscribeEventId and version.
      *
      * @param subscribeIdentity SubscribeIdentity
      * @return Returns the number of affected rows
      */
     int markSucceeded(SubscribeIdentity subscribeIdentity) throws ConcurrentVersionConflictException;
-
+    
     /**
-     * subscribeEventId and version
+     * subscribeEventId and version.
      *
      * @param subscribeIdentity SubscribeIdentity
-     * @param throwable         error
+     * @param throwable error
      * @return Returns the number of affected rows
      */
     int markFailed(SubscribeIdentity subscribeIdentity, Throwable throwable) throws ConcurrentVersionConflictException;
-
-    /***
-     *
-     * @param limit
-     * @param maxVersion
-     * @param before
-     * @param range
-     * @return failed event
-     */
+    
     List<SubscribeEventEntity> queryFailed(int limit, int maxVersion, Duration before, Duration range);
-
+    
     int compensate(SubscribeEventCompensateEntity subscribeEventCompensationEntity);
-
-
+    
+    
 }

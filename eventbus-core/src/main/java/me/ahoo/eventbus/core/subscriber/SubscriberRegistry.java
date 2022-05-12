@@ -14,11 +14,13 @@
 package me.ahoo.eventbus.core.subscriber;
 
 /**
+ * SubscriberRegistry.
+ *
  * @author ahoo wang
  */
 public interface SubscriberRegistry {
     void subscribe(Subscriber subscriber);
-
+    
     Subscriber getSubscriber(String subscriberName);
-
+    
 }

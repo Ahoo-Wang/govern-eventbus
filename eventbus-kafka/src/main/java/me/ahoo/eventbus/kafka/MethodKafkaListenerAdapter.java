@@ -13,44 +13,41 @@
 
 package me.ahoo.eventbus.kafka;
 
-import lombok.extern.slf4j.Slf4j;
 import me.ahoo.eventbus.core.publisher.PublishEvent;
 import me.ahoo.eventbus.core.subscriber.Subscriber;
+
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.listener.MessageListener;
 
 import java.lang.reflect.Method;
 
 /**
+ * MethodKafkaListenerAdapter.
+ *
  * @author ahoo wang
- * Creation time: 2020/4/16 23:08
  */
 @Slf4j
 public class MethodKafkaListenerAdapter implements MessageListener<Long, String> {
-
-    private final static Method invokeMethod;
+    
+    public static final Method INVOKE_METHOD;
     private final KafkaEventCodec kafkaEventCodec;
-
+    
     static {
         try {
-            invokeMethod = MethodKafkaListenerAdapter.class.getMethod("onMessage", ConsumerRecord.class);
+            INVOKE_METHOD = MethodKafkaListenerAdapter.class.getMethod("onMessage", ConsumerRecord.class);
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
     }
-
-    public static Method getInvokeMethod(){
-        return invokeMethod;
-    }
-
-
+    
     private final Subscriber subscriber;
-
+    
     public MethodKafkaListenerAdapter(KafkaEventCodec kafkaEventCodec, Subscriber subscriber) {
         this.kafkaEventCodec = kafkaEventCodec;
         this.subscriber = subscriber;
     }
-
+    
     @Override
     public void onMessage(ConsumerRecord<Long, String> data) {
         try {

@@ -20,31 +20,24 @@ import java.time.Duration;
 import java.util.List;
 
 /**
- * 发布事件仓储
+ * 发布事件仓储.
  *
  * @author ahoo wang
  */
 public interface PublishEventRepository extends EventRepository {
-
+    
     default PublishIdentity initialize(String eventName, Object eventData) {
         return initialize(eventName, 0L, eventData);
     }
-
+    
     PublishIdentity initialize(String eventName, long eventDataId, Object eventData);
-
+    
     int markSucceeded(PublishIdentity publishIdentity) throws ConcurrentVersionConflictException;
-
+    
     int markFailed(PublishIdentity publishIdentity, Throwable throwable) throws ConcurrentVersionConflictException;
-
-    /**
-     * @param limit
-     * @param before
-     * @param range
-     * @param maxVersion
-     * @return
-     */
+    
     List<PublishEventEntity> queryFailed(int limit, int maxVersion, Duration before, Duration range);
-
+    
     int compensate(PublishEventCompensateEntity publishEventCompensationEntity);
-
+    
 }

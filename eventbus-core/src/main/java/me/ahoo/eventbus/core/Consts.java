@@ -14,6 +14,8 @@
 package me.ahoo.eventbus.core;
 
 /**
+ * Govern EventBus Brand Consts.
+ *
  * @author ahoo wang
  */
 public interface Consts {

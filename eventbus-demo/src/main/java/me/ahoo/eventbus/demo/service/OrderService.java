@@ -17,18 +17,22 @@ import me.ahoo.cosid.IdGenerator;
 import me.ahoo.cosid.snowflake.SafeJavaScriptSnowflakeId;
 import me.ahoo.eventbus.core.annotation.Publish;
 import me.ahoo.eventbus.demo.event.OrderCreatedEvent;
+
 import org.springframework.stereotype.Service;
 
 /**
+ * OrderService.
+ *
  * @author ahoo wang
  */
 @Service
 public class OrderService {
     private final IdGenerator idGenerator;
-
+    
     public OrderService() {
         idGenerator = SafeJavaScriptSnowflakeId.ofMillisecond(0);
     }
+    
     @Publish
     public OrderCreatedEvent createOrder() {
         OrderCreatedEvent orderCreatedEvent = new OrderCreatedEvent();

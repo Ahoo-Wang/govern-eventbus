@@ -19,17 +19,19 @@ import java.lang.reflect.Field;
 import java.util.Objects;
 
 /**
+ * FieldEventDataIdGetter.
+ *
  * @author ahoo wang
  */
 public class FieldEventDataIdGetter implements EventDataIdGetter {
-
+    
     private final Field eventDataIdField;
-
+    
     public FieldEventDataIdGetter(Field eventDataIdField) {
         this.eventDataIdField = eventDataIdField;
         eventDataIdField.setAccessible(true);
     }
-
+    
     @Override
     public long getEventDataId(Object targetObject) {
         try {

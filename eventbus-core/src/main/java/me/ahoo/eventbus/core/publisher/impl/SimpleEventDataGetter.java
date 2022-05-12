@@ -16,6 +16,8 @@ package me.ahoo.eventbus.core.publisher.impl;
 import me.ahoo.eventbus.core.publisher.EventDataGetter;
 
 /**
+ * SimpleEventDataGetter.
+ *
  * @author ahoo wang
  */
 public class SimpleEventDataGetter implements EventDataGetter {

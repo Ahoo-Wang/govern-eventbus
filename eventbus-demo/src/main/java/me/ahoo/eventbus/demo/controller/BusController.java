@@ -16,42 +16,44 @@ package me.ahoo.eventbus.demo.controller;
 import me.ahoo.eventbus.demo.event.FieldEventWrapper;
 import me.ahoo.eventbus.demo.event.PublishDataEvent;
 import me.ahoo.eventbus.demo.service.BusService;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
+ * BusController.
+ *
  * @author ahoo wang
- * createTime 2020/2/17 20:17
  */
 @RestController
 @RequestMapping("bus")
 public class BusController {
-
+    
     public final BusService busService;
-
+    
     public BusController(BusService busService) {
         this.busService = busService;
     }
-
+    
     @GetMapping("publish")
     public PublishDataEvent publish() {
         return busService.publish();
     }
-
+    
     @GetMapping("nestedPublish")
     public PublishDataEvent nestedPublish() {
         return busService.nestedPublish();
     }
-
+    
     @GetMapping("nestedPublishWithProxy")
     public PublishDataEvent nestedPublishWithProxy() {
         return busService.nestedPublishWithProxy();
     }
-
+    
     @GetMapping("fieldEventPublish")
     public FieldEventWrapper fieldEventPublish() {
         return busService.fieldEventPublish();
     }
-
+    
 }

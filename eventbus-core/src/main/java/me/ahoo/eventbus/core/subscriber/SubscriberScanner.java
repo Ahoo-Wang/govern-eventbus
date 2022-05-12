@@ -13,13 +13,14 @@
 
 package me.ahoo.eventbus.core.subscriber;
 
-import com.google.common.base.Preconditions;
-import lombok.extern.slf4j.Slf4j;
 import me.ahoo.eventbus.core.annotation.Event;
 import me.ahoo.eventbus.core.annotation.Subscribe;
 import me.ahoo.eventbus.core.publisher.EventDescriptor;
 import me.ahoo.eventbus.core.publisher.EventDescriptorParser;
 import me.ahoo.eventbus.core.subscriber.impl.SimpleSubscriber;
+
+import com.google.common.base.Preconditions;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.ReflectionUtils;
@@ -30,18 +31,21 @@ import java.util.List;
 import java.util.Objects;
 
 /**
+ * SubscriberScanner.
+ *
  * @author ahoo wang
  */
 @Slf4j
 public class SubscriberScanner {
-
+    
     private final SubscriberNameGenerator subscriberNameGenerator;
     private final EventDescriptorParser eventDescriptorParser;
+    
     public SubscriberScanner(SubscriberNameGenerator subscriberNameGenerator, EventDescriptorParser eventDescriptorParser) {
         this.subscriberNameGenerator = subscriberNameGenerator;
         this.eventDescriptorParser = eventDescriptorParser;
     }
-
+    
     private SimpleSubscriber parseSubscriber(Object subscribeTarget, Method method, Subscribe subscribeAnnotation) {
         Preconditions.checkState(method.getParameterCount() == 1, "method:[%s] ParameterCount must be 1.", method);
         String subscribeName = subscriberNameGenerator.generate(method);
@@ -55,12 +59,12 @@ public class SubscriberScanner {
         }
         return new SimpleSubscriber(subscribeName, subscribeTarget, method, subscribeEventDescriptor.getEventName(), subscribeEventDescriptor.getEventClass(), rePublish);
     }
-
+    
     public List<Subscriber> scan(Object subscribeTarget) {
-
+        
         Class<?> subscribeClass = AopUtils.getTargetClass(subscribeTarget);
         List<Subscriber> subscribers = new ArrayList<Subscriber>();
-
+        
         ReflectionUtils.doWithMethods(subscribeClass, method -> {
             Subscribe subscribeAnnotation = AnnotationUtils.findAnnotation(method, Subscribe.class);
             if (Objects.isNull(subscribeAnnotation)) {
@@ -69,7 +73,7 @@ public class SubscriberScanner {
             SimpleSubscriber subscriber = parseSubscriber(subscribeTarget, method, subscribeAnnotation);
             subscribers.add(subscriber);
         }, ReflectionUtils.USER_DECLARED_METHODS);
-
+        
         return subscribers;
     }
 }

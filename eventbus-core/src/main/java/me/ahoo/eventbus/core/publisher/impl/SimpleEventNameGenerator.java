@@ -13,18 +13,21 @@
 
 package me.ahoo.eventbus.core.publisher.impl;
 
-import com.google.common.base.Strings;
 import me.ahoo.eventbus.core.annotation.Event;
 import me.ahoo.eventbus.core.publisher.EventNameGenerator;
+
+import com.google.common.base.Strings;
 
 import java.util.Objects;
 
 /**
+ * SimpleEventNameGenerator.
+ *
  * @author ahoo wang
  */
 
 public class SimpleEventNameGenerator implements EventNameGenerator {
-
+    
     @Override
     public String generate(Event eventAnnotation, Class<?> eventClass) {
         if (Objects.nonNull(eventAnnotation) && !Strings.isNullOrEmpty(eventAnnotation.value())) {

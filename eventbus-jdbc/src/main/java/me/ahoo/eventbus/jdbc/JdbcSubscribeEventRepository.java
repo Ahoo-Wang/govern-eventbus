@@ -13,14 +13,20 @@
 
 package me.ahoo.eventbus.jdbc;
 
-import com.google.common.base.Throwables;
 import me.ahoo.cosid.provider.LazyIdGenerator;
 import me.ahoo.eventbus.core.publisher.PublishEvent;
-import me.ahoo.eventbus.core.repository.*;
+import me.ahoo.eventbus.core.repository.ConcurrentVersionConflictException;
+import me.ahoo.eventbus.core.repository.RepeatedSubscribeException;
+import me.ahoo.eventbus.core.repository.SubscribeEventRepository;
+import me.ahoo.eventbus.core.repository.SubscribeIdentity;
+import me.ahoo.eventbus.core.repository.SubscribeStatus;
+import me.ahoo.eventbus.core.repository.Version;
 import me.ahoo.eventbus.core.repository.entity.SubscribeEventCompensateEntity;
 import me.ahoo.eventbus.core.repository.entity.SubscribeEventEntity;
 import me.ahoo.eventbus.core.serialize.Serializer;
 import me.ahoo.eventbus.core.subscriber.Subscriber;
+
+import com.google.common.base.Throwables;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -30,24 +36,25 @@ import java.util.List;
 import java.util.Optional;
 
 /**
+ * JdbcSubscribeEventRepository.
+ *
  * @author ahoo wang
  */
 public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
-
+    
     private final Serializer serializer;
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final LazyIdGenerator lazyIdGenerator;
-
-    public JdbcSubscribeEventRepository(Serializer serializer
-            , NamedParameterJdbcTemplate jdbcTemplate) {
+    
+    public JdbcSubscribeEventRepository(Serializer serializer, NamedParameterJdbcTemplate jdbcTemplate) {
         this.serializer = serializer;
         this.jdbcTemplate = jdbcTemplate;
         this.lazyIdGenerator = new LazyIdGenerator(JdbcPublishEventRepository.EVENT_BUS_ID_NAME);
     }
-
-    private static final String SQL_GET_SUBSCRIBE_EVENT = "select id,status,version from subscribe_event " +
-            "where event_id=:event_id and event_name=:event_name and subscribe_name=:subscribe_name and event_create_time=:event_create_time limit 1;";
-
+    
+    private static final String SQL_GET_SUBSCRIBE_EVENT = "select id,status,version from subscribe_event "
+        + "where event_id=:event_id and event_name=:event_name and subscribe_name=:subscribe_name and event_create_time=:event_create_time limit 1;";
+    
     private Optional<SubscribeIdentity> getSubscribeIdentity(Subscriber subscriber, PublishEvent subscribePublishEvent) {
         MapSqlParameterSource getSubscribeEventParams = new MapSqlParameterSource("event_id", subscribePublishEvent.getId());
         getSubscribeEventParams.addValue("event_name", subscribePublishEvent.getEventName());
@@ -58,23 +65,24 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
                 long id = rs.getLong("id");
                 int status = rs.getInt("status");
                 int version = rs.getInt("version");
-                SubscribeIdentity _subscribeIdentity = new SubscribeIdentity();
-                _subscribeIdentity.setId(id);
-                _subscribeIdentity.setSubscriberName(subscriber.getName());
-                _subscribeIdentity.setStatus(SubscribeStatus.valueOf(status));
-                _subscribeIdentity.setVersion(version);
-                _subscribeIdentity.setEventCreateTime(subscribePublishEvent.getCreateTime());
-                return _subscribeIdentity;
+                SubscribeIdentity result = new SubscribeIdentity();
+                result.setId(id);
+                result.setSubscriberName(subscriber.getName());
+                result.setStatus(SubscribeStatus.valueOf(status));
+                result.setVersion(version);
+                result.setEventCreateTime(subscribePublishEvent.getCreateTime());
+                return result;
             });
             return Optional.of(subscribeIdentity);
         } catch (EmptyResultDataAccessException ex) {
             return Optional.empty();
         }
     }
-
-    private static final String SQL_SUBSCRIBE_INITIALIZED = "insert subscribe_event(id,subscribe_name, status,subscribe_time, event_id, event_name, event_data_id,event_data, event_create_time, version,create_time)" +
-            "values (:id,:subscribe_name, :status,:subscribe_time, :event_id, :event_name, :event_data_id,:event_data, :event_create_time, :version,:create_time);";
-
+    
+    private static final String SQL_SUBSCRIBE_INITIALIZED =
+        "insert subscribe_event(id,subscribe_name, status,subscribe_time, event_id, event_name, event_data_id,event_data, event_create_time, version,create_time)"
+            + "values (:id,:subscribe_name, :status,:subscribe_time, :event_id, :event_name, :event_data_id,:event_data, :event_create_time, :version,:create_time);";
+    
     private SubscribeIdentity initializeSubscribeIdentity(Subscriber subscriber, PublishEvent subscribePublishEvent, String eventName) {
         SubscribeIdentity subscribeIdentity = new SubscribeIdentity();
         subscribeIdentity.setId(lazyIdGenerator.generate());
@@ -82,7 +90,7 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
         subscribeIdentity.setVersion(Version.INITIAL_VALUE);
         subscribeIdentity.setSubscriberName(subscriber.getName());
         subscribeIdentity.setEventCreateTime(subscribePublishEvent.getCreateTime());
-
+        
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("subscribe_name", subscriber.getName());
         sqlParams.addValue("id", subscribeIdentity.getId());
         sqlParams.addValue("status", subscribeIdentity.getStatus().getValue());
@@ -95,11 +103,11 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
         sqlParams.addValue("event_create_time", subscribeIdentity.getEventCreateTime());
         sqlParams.addValue("version", subscribeIdentity.getVersion());
         sqlParams.addValue("create_time", System.currentTimeMillis());
-
+        
         jdbcTemplate.update(SQL_SUBSCRIBE_INITIALIZED, sqlParams);
         return subscribeIdentity;
     }
-
+    
     @Override
     public SubscribeIdentity initialize(Subscriber subscriber, PublishEvent subscribePublishEvent) throws RepeatedSubscribeException {
         String eventName = subscribePublishEvent.getEventName();
@@ -112,22 +120,22 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
         }
         return initializeSubscribeIdentity(subscriber, subscribePublishEvent, eventName);
     }
-
-
+    
+    
     private void checkAffected(SubscribeIdentity subscribeIdentity, int affected) {
         if (affected == 0) {
-            String errMsg = String.format("Subscribe [%s] mark id:[%d] on version:[%d] to status [%s] error."
-                    , subscribeIdentity.getSubscriberName()
-                    , subscribeIdentity.getId()
-                    , subscribeIdentity.getVersion()
-                    , subscribeIdentity.getStatus().name());
+            String errMsg = String.format("Subscribe [%s] mark id:[%d] on version:[%d] to status [%s] error.",
+                subscribeIdentity.getSubscriberName(),
+                subscribeIdentity.getId(),
+                subscribeIdentity.getVersion(),
+                subscribeIdentity.getStatus().name());
             throw new ConcurrentVersionConflictException(errMsg, subscribeIdentity);
         }
     }
-
+    
     private static final String SQL_MARK_SUCCEEDED
-            = "update subscribe_event set status=1,version=version+1 where id=:id and version=:version and event_create_time=:event_create_time limit 1;";
-
+        = "update subscribe_event set status=1,version=version+1 where id=:id and version=:version and event_create_time=:event_create_time limit 1;";
+    
     @Override
     public int markSucceeded(SubscribeIdentity subscribeIdentity) {
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("id", subscribeIdentity.getId());
@@ -137,24 +145,24 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
         checkAffected(subscribeIdentity, affected);
         return affected;
     }
-
-
+    
+    
     private static final String SQL_MARK_FAILED
-            = "update subscribe_event set status=2,version=version+1 where id=:id and version=:version and event_create_time=:event_create_time limit 1;";
-
+        = "update subscribe_event set status=2,version=version+1 where id=:id and version=:version and event_create_time=:event_create_time limit 1;";
+    
     /**
+     * markFailed.
+     * <pre>
      * 1. insert failed log
      * 2. mark failed status
+     * </pre>
      *
-     * @param subscribeIdentity
-     * @param throwable
-     * @return
      */
     @Override
     public int markFailed(SubscribeIdentity subscribeIdentity, Throwable throwable) {
-
+        
         insertSubscribeEventFailed(subscribeIdentity, throwable);
-
+        
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("id", subscribeIdentity.getId());
         sqlParams.addValue("version", subscribeIdentity.getVersion());
         sqlParams.addValue("event_create_time", subscribeIdentity.getEventCreateTime());
@@ -162,10 +170,10 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
         checkAffected(subscribeIdentity, affected);
         return affected;
     }
-
+    
     private static final String SQL_SUBSCRIBE_FAILED
-            = "insert subscribe_event_failed (subscribe_event_id, failed_msg,create_time) values (:subscribe_event_id, :failed_msg,:create_time)";
-
+        = "insert subscribe_event_failed (subscribe_event_id, failed_msg,create_time) values (:subscribe_event_id, :failed_msg,:create_time)";
+    
     private void insertSubscribeEventFailed(SubscribeIdentity subscribeIdentity, Throwable throwable) {
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("subscribe_event_id", subscribeIdentity.getId());
         String failedMsg = Throwables.getStackTraceAsString(throwable);
@@ -173,19 +181,11 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
         sqlParams.addValue("create_time", System.currentTimeMillis());
         jdbcTemplate.update(SQL_SUBSCRIBE_FAILED, sqlParams);
     }
-
+    
     private static final String SQL_QUERY_FAILED
-            = "select id, subscribe_name, status, subscribe_time, event_id, event_name,event_data_id, event_data, event_create_time, version, create_time from subscribe_event " +
-            "where status<>1 and event_create_time between :lower and :upper and version<:max_version order by version asc limit :limit;";
-
-    /***
-     *
-     * @param limit
-     * @param maxVersion
-     * @param before
-     * @param range
-     * @return
-     */
+        = "select id, subscribe_name, status, subscribe_time, event_id, event_name,event_data_id, event_data, event_create_time, version, create_time from subscribe_event "
+        + "where status<>1 and event_create_time between :lower and :upper and version<:max_version order by version asc limit :limit;";
+    
     @Override
     public List<SubscribeEventEntity> queryFailed(int limit, int maxVersion, Duration before, Duration range) {
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("max_version", maxVersion);
@@ -206,7 +206,7 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
             long eventCreateTime = rs.getLong("event_create_time");
             int version = rs.getInt("version");
             long createTime = rs.getLong("create_time");
-
+            
             SubscribeEventEntity entity = new SubscribeEventEntity();
             entity.setId(id);
             entity.setSubscriberName(subscribeName);
@@ -216,18 +216,18 @@ public class JdbcSubscribeEventRepository implements SubscribeEventRepository {
             entity.setEventName(eventName);
             entity.setEventDataId(eventDataId);
             entity.setEventData(eventDataStr);
-
+            
             entity.setEventCreateTime(eventCreateTime);
             entity.setVersion(version);
             entity.setCreateTime(createTime);
             return entity;
         });
     }
-
+    
     private static String SQL_COMPENSATE
-            = "insert subscribe_event_compensate (subscribe_event_id, start_time, taken, failed_msg) " +
-            "values (:subscribe_event_id, :start_time, :taken, :failed_msg) ";
-
+        = "insert subscribe_event_compensate (subscribe_event_id, start_time, taken, failed_msg) "
+        + "values (:subscribe_event_id, :start_time, :taken, :failed_msg) ";
+    
     @Override
     public int compensate(SubscribeEventCompensateEntity subscribeEventCompensateEntity) {
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("subscribe_event_id", subscribeEventCompensateEntity.getSubscribeEventId());

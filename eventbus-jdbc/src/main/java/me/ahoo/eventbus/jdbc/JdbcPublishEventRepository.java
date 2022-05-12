@@ -13,12 +13,17 @@
 
 package me.ahoo.eventbus.jdbc;
 
-import com.google.common.base.Throwables;
 import me.ahoo.cosid.provider.LazyIdGenerator;
-import me.ahoo.eventbus.core.repository.*;
+import me.ahoo.eventbus.core.repository.ConcurrentVersionConflictException;
+import me.ahoo.eventbus.core.repository.PublishEventRepository;
+import me.ahoo.eventbus.core.repository.PublishIdentity;
+import me.ahoo.eventbus.core.repository.PublishStatus;
+import me.ahoo.eventbus.core.repository.Version;
 import me.ahoo.eventbus.core.repository.entity.PublishEventCompensateEntity;
 import me.ahoo.eventbus.core.repository.entity.PublishEventEntity;
 import me.ahoo.eventbus.core.serialize.Serializer;
+
+import com.google.common.base.Throwables;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
@@ -26,24 +31,26 @@ import java.time.Duration;
 import java.util.List;
 
 /**
+ * JdbcPublishEventRepository.
+ *
  * @author ahoo wang
  */
 public class JdbcPublishEventRepository implements PublishEventRepository {
-    public final static String EVENT_BUS_ID_NAME = "eventbus";
-
+    public static final String EVENT_BUS_ID_NAME = "eventbus";
+    
     private final Serializer serializer;
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final LazyIdGenerator lazyIdGenerator;
-    public JdbcPublishEventRepository(Serializer serializer
-            , NamedParameterJdbcTemplate jdbcTemplate) {
+    
+    public JdbcPublishEventRepository(Serializer serializer, NamedParameterJdbcTemplate jdbcTemplate) {
         this.serializer = serializer;
         this.jdbcTemplate = jdbcTemplate;
-        this.lazyIdGenerator=new LazyIdGenerator(EVENT_BUS_ID_NAME);
+        this.lazyIdGenerator = new LazyIdGenerator(EVENT_BUS_ID_NAME);
     }
-
+    
     private static final String SQL_INITIALIZED
-            = "insert publish_event (id,event_name, event_data_id,event_data, status,version,create_time) values (:id,:event_name,:event_data_id, :event_data, :status,:version,:create_time);";
-
+        = "insert publish_event (id,event_name, event_data_id,event_data, status,version,create_time) values (:id,:event_name,:event_data_id, :event_data, :status,:version,:create_time);";
+    
     @Override
     public PublishIdentity initialize(String eventName, long eventDataId, Object eventData) {
         PublishIdentity publishIdentity = new PublishIdentity();
@@ -53,7 +60,7 @@ public class JdbcPublishEventRepository implements PublishEventRepository {
         publishIdentity.setEventName(eventName);
         publishIdentity.setEventDataId(eventDataId);
         publishIdentity.setCreateTime(System.currentTimeMillis());
-
+        
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("event_name", eventName);
         String eventDataStr = serializer.serialize(eventData);
         sqlParams.addValue("id", publishIdentity.getId());
@@ -65,52 +72,51 @@ public class JdbcPublishEventRepository implements PublishEventRepository {
         jdbcTemplate.update(SQL_INITIALIZED, sqlParams);
         return publishIdentity;
     }
-
-
+    
+    
     private void checkAffected(PublishIdentity publishIdentity, int affected) {
         if (affected > 0) {
             return;
         }
-        String errMsg = String.format("Publish [%s] mark [%d]@[%d] to status [%s] error."
-                , publishIdentity.getEventName()
-                , publishIdentity.getId()
-                , publishIdentity.getVersion()
-                , publishIdentity.getStatus().name());
+        String errMsg = String.format("Publish [%s] mark [%d]@[%d] to status [%s] error.",
+            publishIdentity.getEventName(),
+            publishIdentity.getId(),
+            publishIdentity.getVersion(),
+            publishIdentity.getStatus().name());
         throw new ConcurrentVersionConflictException(errMsg, publishIdentity);
     }
-
+    
     private static final String SQL_MARK_SUCCEEDED
-            = "update publish_event set status=1,version=version+1,published_time=:published_time where id=:id and version=:version and create_time=:create_time;";
-
+        = "update publish_event set status=1,version=version+1,published_time=:published_time where id=:id and version=:version and create_time=:create_time;";
+    
     @Override
     public int markSucceeded(PublishIdentity publishIdentity) {
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("id", publishIdentity.getId());
         sqlParams.addValue("version", publishIdentity.getVersion());
         sqlParams.addValue("published_time", System.currentTimeMillis());
         sqlParams.addValue("create_time", publishIdentity.getCreateTime());
-
+        
         int affected = jdbcTemplate.update(SQL_MARK_SUCCEEDED, sqlParams);
         checkAffected(publishIdentity, affected);
         return affected;
     }
-
-
+    
+    
     private static final String SQL_MARK_FAILED
-            = "update publish_event set status=2,version=version+1 where id=:id and version=:version and create_time=:create_time;";
-
+        = "update publish_event set status=2,version=version+1 where id=:id and version=:version and create_time=:create_time;";
+    
     /**
-     * 1. first insert log
-     * 2. last mark status to failed
-     *
-     * @param publishIdentity
-     * @param throwable
-     * @return
+     * markFailed.
+     * <pre>
+     *     1. first insert log
+     *     2. last mark status to failed
+     * </pre>
      */
     @Override
     public int markFailed(PublishIdentity publishIdentity, Throwable throwable) {
-
+        
         insertPublishEventFailed(publishIdentity, throwable);
-
+        
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("id", publishIdentity.getId());
         sqlParams.addValue("version", publishIdentity.getVersion());
         sqlParams.addValue("create_time", publishIdentity.getCreateTime());
@@ -118,10 +124,10 @@ public class JdbcPublishEventRepository implements PublishEventRepository {
         checkAffected(publishIdentity, affected);
         return affected;
     }
-
+    
     private static final String SQL_PUBLISH_FAILED
-            = "insert publish_event_failed(publish_event_id, failed_msg,create_time) values (:publish_event_id, :failed_msg,:create_time)";
-
+        = "insert publish_event_failed(publish_event_id, failed_msg,create_time) values (:publish_event_id, :failed_msg,:create_time)";
+    
     private void insertPublishEventFailed(PublishIdentity publishIdentity, Throwable throwable) {
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("publish_event_id", publishIdentity.getId());
         String failedMsg = Throwables.getStackTraceAsString(throwable);
@@ -129,11 +135,11 @@ public class JdbcPublishEventRepository implements PublishEventRepository {
         sqlParams.addValue("create_time", System.currentTimeMillis());
         jdbcTemplate.update(SQL_PUBLISH_FAILED, sqlParams);
     }
-
+    
     private static final String SQL_QUERY_FAILED
-            = "select id, event_name,event_data_id, event_data, status, published_time, version, create_time from publish_event " +
-            "where status<>1 and create_time between :lower and :upper and version<:max_version order by version asc limit :limit;";
-
+        = "select id, event_name,event_data_id, event_data, status, published_time, version, create_time from publish_event "
+        + "where status<>1 and create_time between :lower and :upper and version<:max_version order by version asc limit :limit;";
+    
     @Override
     public List<PublishEventEntity> queryFailed(int limit, int maxVersion, Duration before, Duration range) {
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("max_version", maxVersion);
@@ -163,11 +169,11 @@ public class JdbcPublishEventRepository implements PublishEventRepository {
             return entity;
         });
     }
-
-    private final static String SQL_COMPENSATE
-            = "insert publish_event_compensate (publish_event_id, start_time, taken, failed_msg) " +
-            "values (:publish_event_id, :start_time, :taken, :failed_msg);";
-
+    
+    private static final String SQL_COMPENSATE
+        = "insert publish_event_compensate (publish_event_id, start_time, taken, failed_msg) "
+        + "values (:publish_event_id, :start_time, :taken, :failed_msg);";
+    
     @Override
     public int compensate(PublishEventCompensateEntity publishEventCompensateEntity) {
         MapSqlParameterSource sqlParams = new MapSqlParameterSource("publish_event_id", publishEventCompensateEntity.getPublishEventId());
@@ -176,5 +182,5 @@ public class JdbcPublishEventRepository implements PublishEventRepository {
         sqlParams.addValue("failed_msg", publishEventCompensateEntity.getFailedMsg());
         return jdbcTemplate.update(SQL_COMPENSATE, sqlParams);
     }
-
+    
 }

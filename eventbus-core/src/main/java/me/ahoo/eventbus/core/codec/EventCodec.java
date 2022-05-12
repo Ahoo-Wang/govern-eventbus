@@ -14,6 +14,8 @@
 package me.ahoo.eventbus.core.codec;
 
 /**
+ * EventCodec tag.
+ *
  * @author ahoo wang
  */
 public interface EventCodec {

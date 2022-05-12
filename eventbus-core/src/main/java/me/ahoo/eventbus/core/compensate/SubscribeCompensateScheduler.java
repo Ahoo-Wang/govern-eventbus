@@ -13,9 +13,6 @@
 
 package me.ahoo.eventbus.core.compensate;
 
-import com.google.common.base.Stopwatch;
-import com.google.common.base.Throwables;
-import lombok.extern.slf4j.Slf4j;
 import me.ahoo.eventbus.core.publisher.PublishEvent;
 import me.ahoo.eventbus.core.repository.SubscribeEventRepository;
 import me.ahoo.eventbus.core.repository.entity.SubscribeEventCompensateEntity;
@@ -26,20 +23,26 @@ import me.ahoo.eventbus.core.subscriber.SubscriberRegistry;
 import me.ahoo.simba.core.MutexContendServiceFactory;
 import me.ahoo.simba.schedule.ScheduleConfig;
 
+import com.google.common.base.Stopwatch;
+import com.google.common.base.Throwables;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * SubscribeCompensateScheduler.
+ *
  * @author ahoo wang
  */
 @Slf4j
 public class SubscribeCompensateScheduler extends AbstractCompensateScheduler {
-
+    
     private final CompensateConfig compensateConfig;
     private final Deserializer deserializer;
     private final SubscriberRegistry subscriberRegistry;
     protected final SubscribeEventRepository subscribeEventRepository;
-
+    
     public SubscribeCompensateScheduler(CompensateConfig compensateConfig,
                                         ScheduleConfig scheduleConfig,
                                         Deserializer deserializer,
@@ -51,20 +54,20 @@ public class SubscribeCompensateScheduler extends AbstractCompensateScheduler {
         this.subscriberRegistry = subscriberRegistry;
         this.subscribeEventRepository = subscribeEventRepository;
     }
-
+    
     @Override
     protected String getWorker() {
         return "SubscribeCompensateScheduler";
     }
-
+    
     @Override
     protected void work() {
         try {
             List<SubscribeEventEntity> failedEvents = subscribeEventRepository.queryFailed(
-                    compensateConfig.getBatch(),
-                    compensateConfig.getMaxVersion(),
-                    compensateConfig.getBefore(),
-                    compensateConfig.getRange());
+                compensateConfig.getBatch(),
+                compensateConfig.getMaxVersion(),
+                compensateConfig.getBefore(),
+                compensateConfig.getRange());
             if (failedEvents.isEmpty()) {
                 if (log.isInfoEnabled()) {
                     log.info("work - can not find any failed subscribe event!");
@@ -80,30 +83,30 @@ public class SubscribeCompensateScheduler extends AbstractCompensateScheduler {
             }
         }
     }
-
+    
     protected void compensate(SubscribeEventEntity failedEntity) {
         SubscribeEventCompensateEntity subscribeEventCompensationEntity = SubscribeEventCompensateEntity.builder()
-                .subscribeEventId(failedEntity.getId())
-                .startTime(System.currentTimeMillis())
-                .build();
+            .subscribeEventId(failedEntity.getId())
+            .startTime(System.currentTimeMillis())
+            .build();
         if (log.isInfoEnabled()) {
             log.info("compensate - SubscribeEvent -> id:[{}] ,version:[{}].", failedEntity.getId(), failedEntity.getVersion());
         }
         Stopwatch stopwatch = Stopwatch.createStarted();
         Subscriber subscriber = subscriberRegistry.getSubscriber(failedEntity.getSubscriberName());
         PublishEvent publishEventWrapper = convert(failedEntity, subscriber);
-
+        
         try {
             subscriber.invoke(publishEventWrapper);
         } catch (Throwable throwable) {
             if (log.isErrorEnabled()) {
                 log.error(throwable.getMessage(), throwable);
             }
-
+            
             String failedMsg = Throwables.getStackTraceAsString(throwable);
             subscribeEventCompensationEntity.setFailedMsg(failedMsg);
         }
-
+        
         try {
             long taken = stopwatch.elapsed(TimeUnit.MILLISECONDS);
             subscribeEventCompensationEntity.setTaken(taken);
@@ -114,7 +117,7 @@ public class SubscribeCompensateScheduler extends AbstractCompensateScheduler {
             }
         }
     }
-
+    
     private PublishEvent convert(SubscribeEventEntity subscribeEventEntity, Subscriber subscriber) {
         Object eventTypedData = deserializer.deserialize(subscribeEventEntity.getEventData(), subscriber.getSubscribeEventClass());
         PublishEvent publishEvent = new PublishEvent();
@@ -124,5 +127,5 @@ public class SubscribeCompensateScheduler extends AbstractCompensateScheduler {
         publishEvent.setCreateTime(subscribeEventEntity.getEventCreateTime());
         return publishEvent;
     }
-
+    
 }

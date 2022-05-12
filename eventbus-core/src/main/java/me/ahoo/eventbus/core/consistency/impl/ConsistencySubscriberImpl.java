@@ -13,8 +13,6 @@
 
 package me.ahoo.eventbus.core.consistency.impl;
 
-import com.google.common.base.Stopwatch;
-import lombok.extern.slf4j.Slf4j;
 import me.ahoo.eventbus.core.consistency.ConsistencyPublisher;
 import me.ahoo.eventbus.core.consistency.ConsistencySubscriber;
 import me.ahoo.eventbus.core.publisher.EventDescriptor;
@@ -25,6 +23,9 @@ import me.ahoo.eventbus.core.repository.PublishIdentity;
 import me.ahoo.eventbus.core.repository.SubscribeEventRepository;
 import me.ahoo.eventbus.core.repository.SubscribeIdentity;
 import me.ahoo.eventbus.core.subscriber.Subscriber;
+
+import com.google.common.base.Stopwatch;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 
@@ -33,18 +34,20 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * ConsistencySubscriberImpl.
+ *
  * @author ahoo wang
  */
 @Slf4j
 public class ConsistencySubscriberImpl implements ConsistencySubscriber {
-
+    
     private final Subscriber targetSubscriber;
     private final ConsistencyPublisher consistencyPublisher;
     private final PublishEventRepository publishEventRepository;
     private final SubscribeEventRepository subscribeEventRepository;
     private final PlatformTransactionManager transactionManager;
     private final EventDescriptorParser eventDescriptorParser;
-
+    
     public ConsistencySubscriberImpl(Subscriber targetSubscriber,
                                      ConsistencyPublisher consistencyPublisher,
                                      PublishEventRepository publishEventRepository,
@@ -57,28 +60,25 @@ public class ConsistencySubscriberImpl implements ConsistencySubscriber {
         this.transactionManager = transactionManager;
         this.eventDescriptorParser = eventDescriptorParser;
     }
-
+    
     @Override
     public String getName() {
         return targetSubscriber.getName();
     }
-
+    
     @Override
     public Subscriber getTargetSubscriber() {
         return targetSubscriber;
     }
-
-    /**
-     * @param subscribePublishEvent PublishEvent
-     */
+    
     @Override
     public Object invoke(PublishEvent subscribePublishEvent) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         SubscribeIdentity subscribeIdentity = subscribeEventRepository.initialize(targetSubscriber, subscribePublishEvent);
-
+        
         PublishIdentity publishIdentity = null;
         Object publishEventData = null;
-
+        
         TransactionStatus transactionStatus = transactionManager.getTransaction(null);
         try {
             /**
@@ -101,9 +101,9 @@ public class ConsistencySubscriberImpl implements ConsistencySubscriber {
                 subscribeEventRepository.markFailed(subscribeIdentity, throwable);
             } catch (Throwable subscribeFailedThrowable) {
                 if (log.isErrorEnabled()) {
-                    String markFailedError = String.format("invoke - mark subscribe event status to failed error. -> id:[%d] error,taken:[%d]ms!"
-                            , subscribeIdentity.getId()
-                            , stopwatch.elapsed(TimeUnit.MILLISECONDS));
+                    String markFailedError = String.format("invoke - mark subscribe event status to failed error. -> id:[%d] error,taken:[%d]ms!",
+                         subscribeIdentity.getId(),
+                         stopwatch.elapsed(TimeUnit.MILLISECONDS));
                     log.error(markFailedError, subscribeFailedThrowable);
                 }
             }
@@ -112,7 +112,7 @@ public class ConsistencySubscriberImpl implements ConsistencySubscriber {
             }
             throw throwable;
         }
-
+        
         if (log.isDebugEnabled()) {
             log.debug("invoke - Subscribe succeeded! -> id:[{}],taken:[{}]", subscribeIdentity.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
@@ -125,31 +125,31 @@ public class ConsistencySubscriberImpl implements ConsistencySubscriber {
             }
             return publishEventData;
         }
-
+        
         consistencyPublisher.publish(publishIdentity, publishEventData);
         return publishEventData;
     }
-
+    
     @Override
     public Object getTarget() {
         return targetSubscriber.getTarget();
     }
-
+    
     @Override
     public Method getMethod() {
         return targetSubscriber.getMethod();
     }
-
+    
     @Override
     public String getSubscribeEventName() {
         return targetSubscriber.getSubscribeEventName();
     }
-
+    
     @Override
     public Class<?> getSubscribeEventClass() {
         return targetSubscriber.getSubscribeEventClass();
     }
-
+    
     @Override
     public boolean rePublish() {
         return targetSubscriber.rePublish();

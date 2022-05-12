@@ -16,6 +16,8 @@ package me.ahoo.eventbus.core.consistency;
 import me.ahoo.eventbus.core.subscriber.Subscriber;
 
 /**
+ * ConsistencySubscriberFactory.
+ *
  * @author ahoo wang
  */
 public interface ConsistencySubscriberFactory {

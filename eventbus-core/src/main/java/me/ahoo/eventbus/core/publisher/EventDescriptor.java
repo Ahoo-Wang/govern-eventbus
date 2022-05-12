@@ -14,16 +14,18 @@
 package me.ahoo.eventbus.core.publisher;
 
 /**
+ * EventDescriptor.
+ *
  * @author ahoo wang
  */
 public interface EventDescriptor extends EventMetadata {
-
+    
     default long getEventDataId(Object targetObject) {
         return 0;
     }
-
+    
     default Object getEventData(Object targetObject) {
         return targetObject;
     }
-
+    
 }

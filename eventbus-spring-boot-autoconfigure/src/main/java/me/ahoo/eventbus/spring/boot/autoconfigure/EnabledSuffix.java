@@ -14,6 +14,8 @@
 package me.ahoo.eventbus.spring.boot.autoconfigure;
 
 /**
+ * EnabledSuffix.
+ *
  * @author ahoo wang
  */
 public interface EnabledSuffix {

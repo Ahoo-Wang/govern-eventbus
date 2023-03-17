@@ -31,7 +31,7 @@ ext {
     set("springBootVersion", "2.4.13")
     set("springCloudVersion", "2020.0.5")
     set("jmhVersion", "1.29")
-    set("guavaVersion", "30.0-jre")
+    set("guavaVersion", "30.1.1-jre")
     set("springfoxVersion", "3.0.0")
     set("cosIdVersion", "1.10.0")
     set("simbaVersion", "0.3.6")

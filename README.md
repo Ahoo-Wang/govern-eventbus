@@ -1,4 +1,4 @@
-# Govern EventBus
+# *Govern EventBus* is no longer maintained, please use [*Wow*](https://github.com/Ahoo-Wang/Wow) instead.
 
 > [中文文档](./README.zh-CN.md)
 

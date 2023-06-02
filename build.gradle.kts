@@ -35,7 +35,7 @@ ext {
     set("springfoxVersion", "3.0.0")
     set("cosIdVersion", "1.10.0")
     set("simbaVersion", "0.3.6")
-    set("shardingsphereVersion", "5.0.0")
+    set("shardingsphereVersion", "5.2.1")
     set("libraryProjects", libraryProjects)
 }
 
